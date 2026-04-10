@@ -6,6 +6,9 @@ import { ConnectScreen } from './components/layout/ConnectScreen'
 import { ChatView } from './components/chat/ChatView'
 import { DashboardView } from './components/dashboard/DashboardView'
 import { AgentPanel } from './components/agents/AgentPanel'
+import { MemoryBrowser } from './components/panels/MemoryBrowser'
+import { CronScheduler } from './components/panels/CronScheduler'
+import { ToolTimeline } from './components/tools/ToolTimeline'
 import { CommandPalette } from './components/common/CommandPalette'
 
 function App() {
@@ -24,7 +27,10 @@ function App() {
                 <Route path="/chat" element={<ChatView />} />
                 <Route path="/chat/:sessionId" element={<ChatView />} />
                 <Route path="/dashboard" element={<DashboardView />} />
-                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/agents" element={<PageShell><AgentPanel /></PageShell>} />
+                <Route path="/memory" element={<PageShell><MemoryBrowser /></PageShell>} />
+                <Route path="/tools" element={<PageShell><ToolTimeline toolCalls={[]} /></PageShell>} />
+                <Route path="/cron" element={<PageShell><CronScheduler /></PageShell>} />
                 <Route path="*" element={<Navigate to="/chat" replace />} />
               </Routes>
             </Layout>
@@ -37,10 +43,10 @@ function App() {
   )
 }
 
-function AgentsPage() {
+function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="h-full" style={{ background: 'var(--color-bg-primary)' }}>
-      <AgentPanel />
+      {children}
     </div>
   )
 }

@@ -4,6 +4,9 @@ import {
   LayoutDashboard,
   Users,
   PanelLeftClose,
+  Brain,
+  Wrench,
+  Calendar,
 } from 'lucide-react'
 
 // SessionList may not exist yet — wrap in lazy import
@@ -17,6 +20,9 @@ const navItems = [
   { to: '/chat', icon: MessageSquare, label: 'Chat' },
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/agents', icon: Users, label: 'Agents' },
+  { to: '/memory', icon: Brain, label: 'Memory' },
+  { to: '/tools', icon: Wrench, label: 'Tools' },
+  { to: '/cron', icon: Calendar, label: 'Scheduler' },
 ]
 
 export function Sidebar({ onCollapse }: SidebarProps) {
