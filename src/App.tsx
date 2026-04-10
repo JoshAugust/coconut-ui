@@ -9,6 +9,7 @@ import { AgentPanel } from './components/agents/AgentPanel'
 import { MemoryBrowser } from './components/panels/MemoryBrowser'
 import { CronScheduler } from './components/panels/CronScheduler'
 import { ToolTimeline } from './components/tools/ToolTimeline'
+import { SettingsPanel } from './components/panels/SettingsPanel'
 import { CommandPalette } from './components/common/CommandPalette'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/memory" element={<PageShell><MemoryBrowser /></PageShell>} />
                 <Route path="/tools" element={<PageShell><ToolTimeline toolCalls={[]} /></PageShell>} />
                 <Route path="/cron" element={<PageShell><CronScheduler /></PageShell>} />
+                <Route path="/settings" element={<SettingsPanel />} />
                 <Route path="*" element={<Navigate to="/chat" replace />} />
               </Routes>
             </Layout>

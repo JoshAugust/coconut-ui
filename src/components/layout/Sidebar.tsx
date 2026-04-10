@@ -7,6 +7,7 @@ import {
   Brain,
   Wrench,
   Calendar,
+  Settings,
 } from 'lucide-react'
 
 // SessionList may not exist yet — wrap in lazy import
@@ -23,6 +24,7 @@ const navItems = [
   { to: '/memory', icon: Brain, label: 'Memory' },
   { to: '/tools', icon: Wrench, label: 'Tools' },
   { to: '/cron', icon: Calendar, label: 'Scheduler' },
+  { to: '/settings', icon: Settings, label: 'Settings' },
 ]
 
 export function Sidebar({ onCollapse }: SidebarProps) {
