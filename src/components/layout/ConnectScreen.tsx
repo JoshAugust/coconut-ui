@@ -4,7 +4,7 @@ import { Wifi, Loader2, AlertCircle } from 'lucide-react'
 import { useConnectionStore } from '../../stores/connection'
 
 export function ConnectScreen() {
-  const { config, status, error, connect } = useConnectionStore()
+  const { config, status, error, connect, connectDemo } = useConnectionStore()
   const [url, setUrl] = useState(config?.gatewayUrl || '')
   const [token, setToken] = useState(config?.token || '')
   const [agentName, setAgentName] = useState(config?.agentName || '')
@@ -191,6 +191,27 @@ export function ConnectScreen() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mt-5">
+            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>or</span>
+            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+          </div>
+
+          {/* Demo button */}
+          <button
+            onClick={connectDemo}
+            disabled={connecting}
+            className="w-full py-2.5 rounded-lg font-medium text-sm transition-all mt-4"
+            style={{
+              background: 'var(--color-bg-tertiary)',
+              color: 'var(--color-text-secondary)',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            🥥 Try Demo Mode
+          </button>
 
           {/* Footer */}
           <p

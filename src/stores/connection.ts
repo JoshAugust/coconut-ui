@@ -1,10 +1,10 @@
 // Coconut — Connection Store
-// Manages gateway connection state
 
 import { create } from 'zustand'
 import type { ConnectionConfig, ConnectionStatus, BackendCapabilities } from '../types'
 import type { AgentBackendAdapter } from '../adapters/interface'
 import { EragonAdapter } from '../adapters/eragon'
+import { MockAdapter } from '../adapters/mock'
 
 interface ConnectionState {
   adapter: AgentBackendAdapter | null
@@ -12,8 +12,10 @@ interface ConnectionState {
   config: ConnectionConfig | null
   capabilities: BackendCapabilities | null
   error: string | null
+  isDemo: boolean
 
   connect: (config: ConnectionConfig) => Promise<void>
+  connectDemo: () => Promise<void>
   disconnect: () => Promise<void>
   getAdapter: () => AgentBackendAdapter
 }
@@ -42,38 +44,36 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   config: loadSavedConfig(),
   capabilities: null,
   error: null,
+  isDemo: false,
 
   connect: async (config: ConnectionConfig) => {
     const adapter = new EragonAdapter()
-
-    // Subscribe to connection status changes
-    adapter.onConnectionChange((status) => {
-      set({ status })
-    })
+    adapter.onConnectionChange((status) => set({ status }))
 
     try {
-      set({ adapter, config, status: 'connecting', error: null })
+      set({ adapter, config, status: 'connecting', error: null, isDemo: false })
       await adapter.connect(config)
       saveConfig(config)
-      set({
-        capabilities: adapter.capabilities(),
-        status: 'connected',
-      })
+      set({ capabilities: adapter.capabilities(), status: 'connected' })
     } catch (err) {
-      set({
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Connection failed',
-      })
+      set({ status: 'error', error: err instanceof Error ? err.message : 'Connection failed' })
       throw err
     }
   },
 
+  connectDemo: async () => {
+    const adapter = new MockAdapter()
+    const demoConfig: ConnectionConfig = { gatewayUrl: 'demo://mock', token: 'demo' }
+
+    set({ adapter, config: demoConfig, status: 'connecting', error: null, isDemo: true })
+    await adapter.connect(demoConfig)
+    set({ capabilities: adapter.capabilities(), status: 'connected' })
+  },
+
   disconnect: async () => {
     const { adapter } = get()
-    if (adapter) {
-      await adapter.disconnect()
-    }
-    set({ adapter: null, status: 'disconnected', capabilities: null })
+    if (adapter) await adapter.disconnect()
+    set({ adapter: null, status: 'disconnected', capabilities: null, isDemo: false })
   },
 
   getAdapter: () => {
