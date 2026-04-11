@@ -16,14 +16,21 @@
 - [x] Gradient connect button with glow
 - Commit: 2d3eea2
 
-## Phase 3: Layout & Navigation — IN PROGRESS
+## Phase 3: Layout & Navigation ✅ COMPLETE
 - [x] Glass sidebar with backdrop blur
 - [x] Active route indicator with spring animation (layoutId)
 - [x] Sidebar collapse/expand animation
 - [x] Page transitions (AnimatePresence)
-- [ ] Header glass effect polish
+- [x] Header glass effect, pulse status dot, command palette trigger
+- Commit: 18f3796
 
-## Phase 4: Chat View Excellence — NEXT
+## Phase 4: Chat View Excellence ✅ COMPLETE
+- [x] MessageBubble: gradient user, glass assistant, copy, staggered entrance
+- [x] ThinkingBlock: shimmer border, expandable
+- [x] ToolCallCard: glass, per-tool icons, status badges, approval glow buttons
+- [x] ChatInput: glass, auto-resize, gradient send, sparkle indicator
+- [x] ChatView: wired onSend to adapter
+- Commit: 18f3796
 ## Phase 5: Dashboard Wow Factor — QUEUED
 ## Phase 6: Agent & Panel Polish — QUEUED  
 ## Phase 7: Mobile & PWA — QUEUED

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Activity, Users, MessageSquare, DollarSign, Wifi, Clock } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Activity, Users, MessageSquare, DollarSign, Wifi, Clock, RefreshCw } from 'lucide-react'
 import { useConnectionStore } from '../../stores/connection'
 import type { SystemStatus, ContextPressure } from '../../types'
 import { StatusCard } from './StatusCard'
@@ -13,111 +14,281 @@ function formatUptime(ms: number): string {
   return `${minutes}m`
 }
 
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, delay: i * 0.06, ease: [0.25, 0.46, 0.45, 0.94] as const },
+  }),
+}
+
 export function DashboardView() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null)
   const [pressure, setPressure] = useState<ContextPressure | null>(null)
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const status = useConnectionStore((s) => s.status)
   const getAdapter = useConnectionStore((s) => s.getAdapter)
 
+  const fetchStatus = async (showRefresh = false) => {
+    if (status !== 'connected') return
+    if (showRefresh) setRefreshing(true)
+    try {
+      const [sys, ctx] = await Promise.all([
+        getAdapter().getStatus(),
+        getAdapter().getContextPressure('main'),
+      ])
+      setSystemStatus(sys)
+      setPressure(ctx)
+      setLastUpdated(new Date())
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
   useEffect(() => {
     if (status !== 'connected') return
-
-    const fetchStatus = async () => {
-      try {
-        const [sys, ctx] = await Promise.all([
-          getAdapter().getStatus(),
-          getAdapter().getContextPressure('main'),
-        ])
-        setSystemStatus(sys)
-        setPressure(ctx)
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchStatus()
-    const interval = setInterval(fetchStatus, 15000)
+    const interval = setInterval(() => fetchStatus(), 15000)
     return () => clearInterval(interval)
-  }, [status, getAdapter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--color-text-primary)' }}>
-        Dashboard
-      </h1>
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 max-w-6xl mx-auto">
 
-      {loading && !systemStatus ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl animate-pulse"
-              style={{ background: 'var(--color-bg-tertiary)' }}
-            />
-          ))}
-        </div>
-      ) : (
-        <>
-          {/* Status cards grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatusCard
-              icon={<Wifi size={20} />}
-              label="Connection"
-              value={status === 'connected' ? 'Connected' : status}
-              subtitle={systemStatus?.version ? `v${systemStatus.version}` : undefined}
-              color="#10b981"
-            />
-            <StatusCard
-              icon={<Clock size={20} />}
-              label="Uptime"
-              value={systemStatus ? formatUptime(systemStatus.uptime_ms) : '—'}
-              color="#6366f1"
-            />
-            <StatusCard
-              icon={<Users size={20} />}
-              label="Active Agents"
-              value={systemStatus?.activeAgents ?? 0}
-              color="#3b82f6"
-            />
-            <StatusCard
-              icon={<MessageSquare size={20} />}
-              label="Sessions"
-              value={systemStatus?.activeSessions ?? 0}
-              color="#8b5cf6"
-            />
-            <StatusCard
-              icon={<DollarSign size={20} />}
-              label="Cost Today"
-              value={systemStatus ? `$${systemStatus.costToday.toFixed(2)}` : '—'}
-              subtitle={systemStatus ? `$${systemStatus.costThisMonth.toFixed(2)} this month` : undefined}
-              color="#f59e0b"
-            />
-            <StatusCard
-              icon={<Activity size={20} />}
-              label="Channels"
-              value={systemStatus?.connectedChannels?.length ?? 0}
-              subtitle={systemStatus?.connectedChannels?.join(', ') || 'None'}
-              color="#ec4899"
-            />
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-start justify-between mb-8"
+        >
+          <div>
+            <h1
+              className="text-3xl font-bold"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-text-secondary) 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Dashboard
+            </h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
+              {status === 'connected' ? (
+                <>
+                  <span style={{ color: 'var(--color-success)' }}>●</span>{' '}
+                  Live · {lastUpdated ? `Updated ${formatTime(lastUpdated)}` : 'Connecting...'}
+                </>
+              ) : (
+                <>
+                  <span style={{ color: 'var(--color-error)' }}>●</span>{' '}
+                  Disconnected
+                </>
+              )}
+            </p>
           </div>
 
-          {/* Context Gauge */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <ContextGauge pressure={pressure} />
-          </div>
-
-          {/* Agent Panel */}
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: '1px solid var(--color-border)', height: '400px' }}
+          {/* Refresh button */}
+          <motion.button
+            onClick={() => fetchStatus(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            disabled={loading || refreshing}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+            style={{
+              background: 'var(--color-glass)',
+              border: '1px solid var(--color-glass-border)',
+              color: 'var(--color-text-secondary)',
+              backdropFilter: 'blur(var(--glass-blur))',
+              WebkitBackdropFilter: 'blur(var(--glass-blur))',
+            }}
           >
-            <AgentPanel />
+            <motion.div
+              animate={refreshing ? { rotate: 360 } : { rotate: 0 }}
+              transition={refreshing ? { duration: 0.8, repeat: Infinity, ease: 'linear' } : {}}
+            >
+              <RefreshCw size={14} />
+            </motion.div>
+            Refresh
+          </motion.button>
+        </motion.div>
+
+        {/* Status cards grid */}
+        {loading && !systemStatus ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-28 rounded-xl"
+                style={{
+                  background: 'var(--color-glass)',
+                  border: '1px solid var(--color-glass-border)',
+                  backdropFilter: 'blur(var(--glass-blur))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
+                }}
+              >
+                <div className="p-4 space-y-2 animate-pulse">
+                  <div className="h-3 w-16 rounded" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="h-7 w-24 rounded" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="h-2 w-32 rounded" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {[
+                {
+                  icon: <Wifi size={18} />,
+                  label: 'Connection',
+                  value: status === 'connected' ? 'Online' : status,
+                  subtitle: systemStatus?.version ? `Gateway v${systemStatus.version}` : undefined,
+                  color: '#10b981',
+                },
+                {
+                  icon: <Clock size={18} />,
+                  label: 'Uptime',
+                  value: systemStatus ? formatUptime(systemStatus.uptime_ms) : '—',
+                  color: '#6366f1',
+                },
+                {
+                  icon: <Users size={18} />,
+                  label: 'Active Agents',
+                  value: systemStatus?.activeAgents ?? 0,
+                  color: '#3b82f6',
+                },
+                {
+                  icon: <MessageSquare size={18} />,
+                  label: 'Sessions',
+                  value: systemStatus?.activeSessions ?? 0,
+                  color: '#8b5cf6',
+                },
+                {
+                  icon: <DollarSign size={18} />,
+                  label: 'Cost Today',
+                  value: systemStatus ? `$${systemStatus.costToday.toFixed(2)}` : '—',
+                  subtitle: systemStatus ? `$${systemStatus.costThisMonth.toFixed(2)} this month` : undefined,
+                  color: '#f59e0b',
+                },
+                {
+                  icon: <Activity size={18} />,
+                  label: 'Channels',
+                  value: systemStatus?.connectedChannels?.length ?? 0,
+                  subtitle: systemStatus?.connectedChannels?.join(', ') || 'None',
+                  color: '#ec4899',
+                },
+              ].map((card, i) => (
+                <motion.div
+                  key={card.label}
+                  custom={i}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  <StatusCard {...card} index={i} />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Context Gauge + System Info row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+              <ContextGauge pressure={pressure} />
+
+              {/* System info card */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="relative rounded-xl p-5"
+                style={{
+                  background: 'var(--color-glass)',
+                  backdropFilter: 'blur(var(--glass-blur))',
+                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
+                  border: '1px solid var(--color-glass-border)',
+                  boxShadow: 'var(--shadow-md)',
+                }}
+              >
+                {/* Top accent */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-px"
+                  style={{
+                    background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent)',
+                  }}
+                />
+
+                <p className="text-xs font-medium tracking-wide uppercase mb-4" style={{ color: 'var(--color-text-muted)' }}>
+                  System Info
+                </p>
+
+                <div className="space-y-3">
+                  {systemStatus ? (
+                    <>
+                      {[
+                        { label: 'Version', value: systemStatus.version ? `v${systemStatus.version}` : 'Unknown' },
+                        { label: 'Uptime', value: formatUptime(systemStatus.uptime_ms) },
+                        { label: 'Channels', value: systemStatus.connectedChannels?.join(', ') || 'None' },
+                        { label: 'Cost / Month', value: `$${systemStatus.costThisMonth.toFixed(4)}` },
+                      ].map(({ label, value }, i) => (
+                        <motion.div
+                          key={label}
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: 0.5 + i * 0.05 }}
+                          className="flex items-center justify-between py-2"
+                          style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+                        >
+                          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                            {label}
+                          </span>
+                          <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                            {value}
+                          </span>
+                        </motion.div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="py-6 text-center">
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                        {status === 'connected' ? 'Loading…' : 'Not connected'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Agent Panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="relative rounded-xl overflow-hidden"
+              style={{
+                border: '1px solid var(--color-glass-border)',
+                height: '400px',
+              }}
+            >
+              <AgentPanel />
+            </motion.div>
+          </>
+        )}
+      </div>
     </div>
   )
 }
