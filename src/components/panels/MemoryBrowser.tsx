@@ -6,7 +6,6 @@ import {
   FileText,
   Clock,
   ChevronRight,
-  RefreshCw,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -25,8 +24,6 @@ interface MemoryEntry {
 interface MemoryBrowserProps {
   memories?: MemoryEntry[]
   onSearch?: (query: string) => void
-  onRefresh?: () => void
-  loading?: boolean
 }
 
 const sourceConfig: Record<string, { color: string; glow: string; icon: React.ElementType; label: string }> = {
@@ -82,8 +79,6 @@ const cardVariants = {
 export function MemoryBrowser({
   memories = demoMemories,
   onSearch,
-  onRefresh,
-  loading = false,
 }: MemoryBrowserProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
