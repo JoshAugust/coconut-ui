@@ -56,7 +56,7 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
         ease: [0.16, 1, 0.3, 1],
       }}
       className={`flex gap-3 group ${isUser ? 'flex-row-reverse' : ''}`}
-      style={{ padding: '4px 0' }}
+      style={{ padding: '6px 0' }}
     >
       {/* Avatar */}
       <div
@@ -74,7 +74,7 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
       </div>
 
       {/* Content */}
-      <div className={`flex flex-col gap-2 max-w-[75%] min-w-0 ${isUser ? 'items-end' : ''}`}>
+      <div className={`flex flex-col gap-2.5 max-w-[75%] min-w-0 ${isUser ? 'items-end' : ''}`}>
         {/* Thinking blocks */}
         {message.blocks
           ?.filter((b) => b.type === 'thinking')
@@ -85,7 +85,7 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
         {/* Main text */}
         {message.content && (
           <div
-            className="relative rounded-2xl px-4 py-3"
+            className="relative rounded-2xl px-5 py-3.5"
             style={{
               background: isUser
                 ? 'linear-gradient(135deg, var(--color-primary), var(--color-accent))'

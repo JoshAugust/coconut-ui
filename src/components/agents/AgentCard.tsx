@@ -98,7 +98,7 @@ export function AgentCard({ agent, depth = 0 }: AgentCardProps) {
           }}
         />
 
-        <div className="relative px-4 py-3">
+        <div className="relative px-5 py-4">
           {/* Header row */}
           <div className="flex items-center justify-between gap-2">
             <AgentStatusBadge status={agent.status} />

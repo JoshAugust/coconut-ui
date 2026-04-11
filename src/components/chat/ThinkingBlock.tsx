@@ -34,7 +34,7 @@ export function ThinkingBlock({ text }: ThinkingBlockProps) {
         }}
       />
 
-      <div className="relative p-3">
+      <div className="relative p-4">
         {/* Header */}
         <div className="flex items-center gap-2 mb-1">
           <Brain size={14} style={{ color: 'var(--color-accent)' }} />

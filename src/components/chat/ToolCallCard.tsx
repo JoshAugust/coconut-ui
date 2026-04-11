@@ -61,7 +61,7 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
     >
       {/* Header */}
       <div
-        className="flex items-center gap-3 px-3 py-2.5 cursor-pointer"
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
         style={{ transition: 'background var(--transition-fast)' }}
         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg-hover)'}
@@ -135,7 +135,7 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
             className="overflow-hidden"
           >
             <div
-              className="px-3 pb-3 space-y-2"
+              className="px-4 pb-4 space-y-2"
               style={{ borderTop: '1px solid var(--color-border-subtle)' }}
             >
               {/* Args */}
