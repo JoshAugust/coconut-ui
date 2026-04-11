@@ -43,6 +43,15 @@
 - [x] Animated context breakdown bars + token counts
 - Commit: f38a219
 
-## Phase 6: Agent & Panel Polish — QUEUED  
+## Phase 6: Agent & Panel Polish ✅ COMPLETE (partial — badges, agent cards, cron)
+- [x] AgentStatusBadge: pulse dot animations with radiating rings (running=double-ring, idle=slow pulse, completed/failed/killed=static glow)
+- [x] AgentCard: full glassmorphism treatment — backdrop-blur, status-colored left border + glow, hover lift effect, gradient sweep on hover, glass steer input, polished action buttons
+- [x] CronScheduler: animated spring toggle switch (proper on/off slide), glass cards, urgency-colored next-run times (red=soon, amber=medium, muted=later), animated run button (Play→Zap flash), expand/collapse with spring chevron
+- Commit: 45dfd97
+
+## Phase 6 Remaining — QUEUED
+- [ ] MemoryBrowser glass card upgrade
+- [ ] ToolTimeline glass + entry animation polish
+
 ## Phase 7: Mobile & PWA — QUEUED
 ## Phase 8: Testing & Ship — QUEUED

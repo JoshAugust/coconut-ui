@@ -48,10 +48,11 @@
 
 ## Phase 6: Agent & Panel Polish
 - [ ] Agent tree with animated connection lines
-- [ ] Status badges with pulse animations
+- [x] Status badges with pulse animations
 - [ ] Memory browser with glass cards
 - [ ] Tool timeline with animated entry
-- [ ] Cron scheduler with toggle animations
+- [x] Cron scheduler with toggle animations
+- [x] AgentCard glassmorphism + status glow
 
 ## Phase 7: Mobile & PWA
 - [ ] Responsive sidebar (sheet on mobile)
