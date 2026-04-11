@@ -55,9 +55,9 @@
 - [x] AgentCard glassmorphism + status glow
 
 ## Phase 7: Mobile & PWA
-- [ ] Responsive sidebar (sheet on mobile)
-- [ ] Touch-friendly hit targets
-- [ ] Bottom nav on mobile
+- [x] Responsive sidebar (sheet on mobile)
+- [x] Touch-friendly hit targets
+- [x] Bottom nav on mobile
 - [ ] Pull-to-refresh gesture
 - [ ] Improved PWA icons
 

@@ -54,5 +54,14 @@
 - [x] ToolTimeline glass + entry animation polish — glass cards with left border accent, staggered slide-in, running shimmer bar, pulsing timeline dots, labeled code sections
 - Commit: 7b7e528
 
-## Phase 7: Mobile & PWA — QUEUED
+## Phase 7: Mobile & PWA ✅ COMPLETE (core items)
+- [x] Responsive sidebar — overlay sheet on mobile (<768px) with backdrop blur + spring slide animation
+- [x] Sidebar auto-closes on navigation (mobile)
+- [x] MobileBottomNav — fixed bottom bar with animated active pill (layoutId), spring tap feedback, safe-area inset support
+- [x] Header hamburger menu on mobile (44px touch target) — opens sidebar sheet
+- [x] Touch-friendly hit targets — all buttons 40-44px minimum on mobile
+- [x] Viewport-aware sidebar state (opens on desktop, closed on mobile by default)
+- [x] Command palette & separator hidden on mobile (declutter)
+- Commit: 399c152
+
 ## Phase 8: Testing & Ship — QUEUED
