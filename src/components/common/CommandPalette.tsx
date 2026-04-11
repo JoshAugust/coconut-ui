@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Command } from 'cmdk'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Moon, Sun, Zap, Settings, Search } from 'lucide-react'
+import { Moon, Sun, Zap, Search } from 'lucide-react'
 import { useThemeStore } from '../../stores/theme'
 import { useConnectionStore } from '../../stores/connection'
 

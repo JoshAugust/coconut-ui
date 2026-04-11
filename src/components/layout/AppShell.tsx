@@ -371,15 +371,15 @@ function DesktopHeader({
 }
 
 function MobileHeader({
-  onMenuClick, isDemo, status, mode, toggleMode, rightPanel, onToggleRight,
+  onMenuClick, isDemo, status, mode, toggleMode,
 }: {
   onMenuClick: () => void
   isDemo: boolean
   status: string
   mode: string
   toggleMode: () => void
-  rightPanel: RightPanel
-  onToggleRight: (p: RightPanel) => void
+  rightPanel?: RightPanel
+  onToggleRight?: (p: RightPanel) => void
 }) {
   const statusColor = status === 'connected' ? 'var(--color-success)' : 'var(--color-warning)'
 
@@ -429,7 +429,7 @@ function MobileBottomTabs({
   onToggle: (p: RightPanel) => void
   onChat: () => void
 }) {
-  const items: { id: RightPanel | 'chat'; icon: typeof Users; label: string }[] = [
+  const items: { id: RightPanel | 'chat'; icon: React.ElementType; label: string }[] = [
     { id: 'chat', icon: () => <span style={{ fontSize: 18 }}>💬</span>, label: 'Chat' },
     { id: 'agents', icon: Users, label: 'Agents' },
     { id: 'memory', icon: Brain, label: 'Memory' },
