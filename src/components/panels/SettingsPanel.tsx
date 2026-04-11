@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Sun, Moon, LogOut, Palette, User, Server } from 'lucide-react'
+import { Sun, Moon, LogOut, Palette, User, Server } from 'lucide-react'
 import { useThemeStore } from '../../stores/theme'
 import { useConnectionStore } from '../../stores/connection'
 
@@ -15,14 +15,8 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6" style={{ background: 'var(--color-bg-primary)' }}>
+    <div className="h-full overflow-y-auto">
       <div className="max-w-xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <Settings size={24} style={{ color: 'var(--color-text-primary)' }} />
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Settings
-          </h1>
-        </div>
 
         {/* Connection section */}
         <Section title="Connection" icon={<Server size={16} />}>

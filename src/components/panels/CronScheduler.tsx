@@ -6,7 +6,6 @@ import {
   Play,
   Trash2,
   RefreshCw,
-  Calendar,
   ChevronDown,
   Zap,
   Timer,
@@ -145,48 +144,32 @@ export function CronScheduler({
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--color-bg-secondary)' }}>
-      {/* Header */}
+    <div className="flex flex-col h-full">
+      {/* Compact toolbar */}
       <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ borderBottom: '1px solid var(--color-border)' }}
+        className="px-1 py-2 flex items-center justify-between"
       >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05))',
-              border: '1px solid rgba(245,158,11,0.3)',
-            }}
-          >
-            <Calendar size={14} style={{ color: '#f59e0b' }} />
-          </div>
-          <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-            Scheduled Jobs
-          </h2>
-          {/* Active count badge */}
-          <motion.span
-            key={activeCount}
-            initial={{ scale: 1.3 }}
-            animate={{ scale: 1 }}
-            className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              background: activeCount > 0
-                ? 'rgba(16,185,129,0.15)'
-                : 'var(--color-bg-tertiary)',
-              color: activeCount > 0
-                ? 'var(--color-success)'
-                : 'var(--color-text-muted)',
-              border: `1px solid ${activeCount > 0 ? 'rgba(16,185,129,0.3)' : 'var(--color-border-subtle)'}`,
-            }}
-          >
-            {activeCount} active
-          </motion.span>
-        </div>
+        <motion.span
+          key={activeCount}
+          initial={{ scale: 1.3 }}
+          animate={{ scale: 1 }}
+          className="text-[11px] px-2 py-0.5 rounded-md font-medium"
+          style={{
+            background: activeCount > 0
+              ? 'rgba(16,185,129,0.12)'
+              : 'var(--color-bg-tertiary)',
+            color: activeCount > 0
+              ? 'var(--color-success)'
+              : 'var(--color-text-muted)',
+            border: `1px solid ${activeCount > 0 ? 'rgba(16,185,129,0.2)' : 'var(--color-border-subtle)'}`,
+          }}
+        >
+          {activeCount} active
+        </motion.span>
 
         <div className="flex items-center gap-1">
           <button
-            className="p-1.5 rounded-md transition-all hover:opacity-80"
+            className="p-1.5 rounded-md transition-all hover:opacity-80 cursor-pointer"
             style={{
               background: 'rgba(99,102,241,0.1)',
               color: 'var(--color-primary)',

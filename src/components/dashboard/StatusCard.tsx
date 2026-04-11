@@ -87,12 +87,10 @@ export function StatusCard({ icon, label, value, subtitle, color = '#10b981', tr
       whileHover={{ y: -3, scale: 1.01 }}
       className="relative overflow-hidden rounded-xl p-4 cursor-default group"
       style={{
-        background: 'var(--color-glass)',
-        backdropFilter: 'blur(var(--glass-blur))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        border: '1px solid var(--color-glass-border)',
-        boxShadow: 'var(--shadow-md)',
-        transition: 'box-shadow 250ms ease, border-color 250ms ease',
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid var(--color-border)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        transition: 'box-shadow 250ms ease, border-color 250ms ease, transform 250ms ease',
       }}
       onHoverStart={(e) => {
         const el = e.currentTarget as HTMLElement

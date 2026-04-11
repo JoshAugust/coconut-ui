@@ -255,12 +255,25 @@ function LeftPanel({ onClose }: { onClose: () => void }) {
       {/* Branding */}
       <div
         className="flex items-center justify-between px-5 h-14 shrink-0"
-        style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+        style={{
+          background: 'linear-gradient(180deg, var(--color-bg-elevated) 0%, var(--color-bg-secondary) 100%)',
+          borderBottom: '1px solid var(--color-border)',
+        }}
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xl">🥥</span>
           <span className="text-sm font-bold tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
             Coconut
+          </span>
+          <span
+            className="text-[9px] font-semibold uppercase tracking-widest px-1.5 py-0.5 rounded-md"
+            style={{
+              color: 'var(--color-primary)',
+              background: 'var(--color-primary-muted)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+            }}
+          >
+            Beta
           </span>
         </div>
         <motion.button
@@ -334,13 +347,14 @@ function DesktopHeader({
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer"
               style={{
-                background: active ? 'var(--color-bg-active)' : 'transparent',
-                border: active ? '1px solid var(--color-glass-border)' : '1px solid transparent',
-                borderRadius: 'var(--radius-md)',
+                background: active ? 'var(--color-bg-elevated)' : 'transparent',
+                border: active ? '1px solid var(--color-border)' : '1px solid transparent',
+                borderRadius: '10px',
                 color: active ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
                 fontSize: '12px',
                 fontWeight: active ? 600 : 400,
                 transition: 'all 0.15s ease',
+                boxShadow: active ? '0 1px 6px rgba(0,0,0,0.2)' : 'none',
               }}
               title={label}
             >

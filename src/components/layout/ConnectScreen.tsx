@@ -37,14 +37,30 @@ export function ConnectScreen() {
         }}
       />
 
+      {/* Radial glow behind card */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          width: '600px',
+          height: '600px',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(16, 185, 129, 0.06) 0%, rgba(129, 140, 248, 0.03) 40%, transparent 70%)',
+        }}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-lg w-full max-w-md mx-4"
+        className="w-full max-w-md mx-4 relative"
         style={{
-          borderRadius: 'var(--radius-2xl)',
-          padding: '40px',
+          borderRadius: '24px',
+          padding: '44px',
+          background: 'var(--color-bg-secondary)',
+          border: '1px solid var(--color-border)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35), 0 0 80px rgba(16, 185, 129, 0.04)',
         }}
       >
         {/* Logo */}
@@ -102,13 +118,16 @@ export function ConnectScreen() {
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="wss://your-relay.up.railway.app"
                   disabled={connecting}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm outline-none connect-input"
                   style={{
-                    background: 'var(--color-bg-tertiary)',
+                    background: 'var(--color-bg-elevated)',
                     border: '1px solid var(--color-border)',
                     color: 'var(--color-text-primary)',
-                    borderRadius: 'var(--radius-lg)',
+                    borderRadius: '14px',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                   }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-muted)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
                 />
               </div>
             </motion.div>
@@ -137,13 +156,16 @@ export function ConnectScreen() {
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Gateway auth token"
                   disabled={connecting}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 text-sm outline-none"
                   style={{
-                    background: 'var(--color-bg-tertiary)',
+                    background: 'var(--color-bg-elevated)',
                     border: '1px solid var(--color-border)',
                     color: 'var(--color-text-primary)',
-                    borderRadius: 'var(--radius-lg)',
+                    borderRadius: '14px',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                   }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-muted)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
                 />
               </div>
             </motion.div>
@@ -166,13 +188,16 @@ export function ConnectScreen() {
                 onChange={(e) => setAgentName(e.target.value)}
                 placeholder="e.g. Brock"
                 disabled={connecting}
-                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                className="w-full px-4 py-3 text-sm outline-none"
                 style={{
-                  background: 'var(--color-bg-tertiary)',
+                  background: 'var(--color-bg-elevated)',
                   border: '1px solid var(--color-border)',
                   color: 'var(--color-text-primary)',
-                  borderRadius: 'var(--radius-lg)',
+                  borderRadius: '14px',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
                 }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = '0 0 0 3px var(--color-primary-muted)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.boxShadow = 'none' }}
               />
             </motion.div>
           </div>
@@ -207,12 +232,13 @@ export function ConnectScreen() {
             style={{
               background: connecting
                 ? 'var(--color-primary-muted)'
-                : 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
-              borderRadius: 'var(--radius-lg)',
+                : 'linear-gradient(135deg, #10b981, #0891b2)',
+              borderRadius: '14px',
               border: 'none',
+              height: '44px',
               opacity: (!url || !token) ? 0.5 : 1,
-              boxShadow: 'var(--shadow-glow)',
-              transition: 'all var(--transition-base)',
+              boxShadow: (!url || !token || connecting) ? 'none' : '0 4px 16px rgba(16, 185, 129, 0.25)',
+              transition: 'all 0.2s ease',
             }}
           >
             {connecting ? (

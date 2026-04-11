@@ -67,53 +67,32 @@ export function DashboardView() {
     <div className="h-full overflow-y-auto">
       <div className="p-6 max-w-6xl mx-auto">
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="flex items-start justify-between mb-8"
-        >
-          <div>
-            <h1
-              className="text-3xl font-bold"
-              style={{
-                background: 'linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-text-secondary) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Dashboard
-            </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
-              {status === 'connected' ? (
-                <>
-                  <span style={{ color: 'var(--color-success)' }}>●</span>{' '}
-                  Live · {lastUpdated ? `Updated ${formatTime(lastUpdated)}` : 'Connecting...'}
-                </>
-              ) : (
-                <>
-                  <span style={{ color: 'var(--color-error)' }}>●</span>{' '}
-                  Disconnected
-                </>
-              )}
-            </p>
-          </div>
-
-          {/* Refresh button */}
+        {/* Compact status line */}
+        <div className="flex items-center justify-between mb-5">
+          <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+            {status === 'connected' ? (
+              <>
+                <span style={{ color: 'var(--color-success)' }}>●</span>{' '}
+                Live{lastUpdated ? ` · ${formatTime(lastUpdated)}` : ''}
+              </>
+            ) : (
+              <>
+                <span style={{ color: 'var(--color-error)' }}>●</span>{' '}
+                Disconnected
+              </>
+            )}
+          </span>
           <motion.button
             onClick={() => fetchStatus(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             disabled={loading || refreshing}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40"
+            className="p-1.5 cursor-pointer disabled:opacity-40"
             style={{
-              background: 'var(--color-glass)',
-              border: '1px solid var(--color-glass-border)',
-              color: 'var(--color-text-secondary)',
-              backdropFilter: 'blur(var(--glass-blur))',
-              WebkitBackdropFilter: 'blur(var(--glass-blur))',
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-text-muted)',
+              borderRadius: '8px',
             }}
           >
             <motion.div
@@ -122,9 +101,8 @@ export function DashboardView() {
             >
               <RefreshCw size={14} />
             </motion.div>
-            Refresh
           </motion.button>
-        </motion.div>
+        </div>
 
         {/* Status cards grid */}
         {loading && !systemStatus ? (
