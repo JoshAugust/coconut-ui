@@ -31,7 +31,18 @@
 - [x] ChatInput: glass, auto-resize, gradient send, sparkle indicator
 - [x] ChatView: wired onSend to adapter
 - Commit: 18f3796
-## Phase 5: Dashboard Wow Factor — QUEUED
+## Phase 5: Dashboard Wow Factor ✅ COMPLETE
+- [x] Animated count-up numbers (custom useCountUp hook with cubic ease-out)
+- [x] Animated SVG radial ring gauge for Context Window (270° arc, color by level)
+- [x] Sparkline mini-charts in every StatusCard (decorative SVG wave + area fill)
+- [x] Glass cards with hover lift + per-card color glow on hover
+- [x] Staggered card entrance animations (framer-motion variants, 60ms delay each)
+- [x] Gradient dashboard header with live update timestamp
+- [x] Refresh button with spinning animation
+- [x] System Info panel (version, uptime, channels, cost/month)
+- [x] Animated context breakdown bars + token counts
+- Commit: f38a219
+
 ## Phase 6: Agent & Panel Polish — QUEUED  
 ## Phase 7: Mobile & PWA — QUEUED
 ## Phase 8: Testing & Ship — QUEUED
