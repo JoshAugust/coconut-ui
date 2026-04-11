@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div data-theme={mode} className="h-full w-full" style={{ background: 'var(--color-bg-primary)', color: 'var(--color-text-primary)' }}>
-      <BrowserRouter>
+      <BrowserRouter basename="/coconut-ui">
         {status === 'connected' ? (
           <>
             <CommandPalette />
