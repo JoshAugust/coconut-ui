@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Bot, RefreshCw } from 'lucide-react'
 import type { NormalizedAgent } from '../../types'
 import { useConnectionStore } from '../../stores/connection'
@@ -30,62 +31,70 @@ export function AgentPanel() {
 
   const activeCount = agents.filter((a) => a.status === 'running' || a.status === 'idle').length
 
-  return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: 'var(--color-bg-secondary)' }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: '1px solid var(--color-border)' }}
-      >
-        <div className="flex items-center gap-2">
-          <h2 className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            Sub-Agents
-          </h2>
-          {activeCount > 0 && (
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ background: 'var(--color-primary)', color: 'white' }}
-            >
-              {activeCount}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={fetchAgents}
-          className="p-1.5 rounded hover:opacity-80 transition-opacity"
-          style={{ color: 'var(--color-text-muted)' }}
-          title="Refresh"
+  if (loading && agents.length === 0) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="h-24 rounded-xl animate-pulse"
+            style={{ background: 'var(--color-bg-tertiary)' }}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (agents.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center"
+          style={{ background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-subtle)' }}
         >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
+          <Bot size={28} style={{ color: 'var(--color-text-muted)' }} />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            No active agents
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+            Sub-agents will appear here when spawned
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Active count + refresh */}
+      <div className="flex items-center justify-between mb-4">
+        {activeCount > 0 && (
+          <span
+            className="text-xs px-2.5 py-1 rounded-full font-medium"
+            style={{ background: 'var(--color-primary-muted)', color: 'var(--color-primary)' }}
+          >
+            {activeCount} active
+          </span>
+        )}
+        {activeCount === 0 && <span />}
+        <motion.button
+          onClick={fetchAgents}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="p-1.5 rounded-md cursor-pointer"
+          style={{
+            background: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-border-subtle)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+        </motion.button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading && agents.length === 0 ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-24 rounded animate-pulse"
-                style={{ background: 'var(--color-bg-tertiary)' }}
-              />
-            ))}
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 opacity-50">
-            <Bot size={48} style={{ color: 'var(--color-text-muted)' }} />
-            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              No active agents
-            </p>
-          </div>
-        ) : (
-          <AgentTree agents={agents} />
-        )}
-      </div>
+      <AgentTree agents={agents} />
     </div>
   )
 }

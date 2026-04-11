@@ -40,10 +40,11 @@ export function SessionItem({ session }: SessionItemProps) {
     <motion.div
       layout
       onClick={() => setActiveSession(session.id)}
-      className="flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded-md transition-all"
+      className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer rounded-lg transition-all"
       style={{
-        background: isActive ? 'var(--color-bg-hover)' : 'transparent',
+        background: isActive ? 'var(--color-bg-active)' : 'transparent',
         borderLeft: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+        paddingLeft: isActive ? '13px' : '16px',
       }}
       onMouseEnter={(e) => {
         if (!isActive) e.currentTarget.style.background = 'var(--color-bg-hover)'

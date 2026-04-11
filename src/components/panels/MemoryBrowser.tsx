@@ -105,53 +105,9 @@ export function MemoryBrowser({
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--color-bg-secondary)' }}>
-      {/* Header */}
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{
-          borderBottom: '1px solid var(--color-border)',
-          background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(16,185,129,0.04) 100%)',
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-md flex items-center justify-center"
-            style={{ background: 'rgba(139,92,246,0.15)', boxShadow: '0 0 8px rgba(139,92,246,0.25)' }}
-          >
-            <Brain size={13} style={{ color: '#8b5cf6' }} />
-          </div>
-          <h2 className="font-semibold text-sm" style={{ color: 'var(--color-text-primary)' }}>
-            Memory
-          </h2>
-          <motion.span
-            key={memories.length}
-            initial={{ scale: 0.7, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-xs px-1.5 py-0.5 rounded-full font-medium"
-            style={{ background: 'rgba(139,92,246,0.15)', color: '#8b5cf6' }}
-          >
-            {memories.length}
-          </motion.span>
-        </div>
-
-        <motion.button
-          onClick={onRefresh}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-1.5 rounded-md"
-          style={{
-            color: 'var(--color-text-muted)',
-            background: 'var(--color-bg-tertiary)',
-            border: '1px solid var(--color-border-subtle)',
-          }}
-        >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-        </motion.button>
-      </div>
-
+    <div className="flex flex-col h-full">
       {/* Search */}
-      <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+      <div className="px-1 pb-3">
         <div className="relative">
           <Search
             size={13}
@@ -192,8 +148,8 @@ export function MemoryBrowser({
 
       {/* Source filters */}
       <div
-        className="flex items-center gap-1.5 px-4 py-2 overflow-x-auto"
-        style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
+        className="flex items-center gap-1.5 px-1 pb-3 overflow-x-auto"
+        style={{ borderBottom: '1px solid var(--color-border-subtle)', marginBottom: 0 }}
       >
         <motion.button
           onClick={() => setActiveSource(null)}
