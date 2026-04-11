@@ -16,8 +16,9 @@ export function ThinkingBlock({ text }: ThinkingBlockProps) {
       animate={{ opacity: 1, scale: 1 }}
       className="relative overflow-hidden cursor-pointer w-full"
       style={{
-        background: 'rgba(139, 92, 246, 0.06)',
-        border: '1px solid rgba(139, 92, 246, 0.15)',
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid rgba(139, 92, 246, 0.2)',
+        borderLeft: '3px solid rgba(139, 92, 246, 0.5)',
         borderRadius: '14px',
       }}
       onClick={() => setExpanded(!expanded)}

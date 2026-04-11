@@ -63,8 +63,13 @@ export function SessionList() {
         </div>
         <button
           onClick={handleNewSession}
-          className="p-1.5 rounded-md flex-shrink-0"
+          className="rounded-md flex-shrink-0 cursor-pointer"
           style={{
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             background: 'var(--color-bg-tertiary)',
             color: 'var(--color-text-secondary)',
             border: '1px solid var(--color-border-subtle)',
@@ -81,7 +86,7 @@ export function SessionList() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-10 rounded-md animate-pulse"
+              className="h-10 rounded-lg animate-pulse"
               style={{ background: 'var(--color-bg-tertiary)' }}
             />
           ))}

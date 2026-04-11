@@ -25,12 +25,12 @@ function formatTokens(n: number): string {
 }
 
 /** Left-border + glow color by status */
-const statusAccent: Record<string, { border: string; glow: string; bg: string }> = {
-  running:   { border: '#3b82f6', glow: 'rgba(59,130,246,0.12)',  bg: 'rgba(59,130,246,0.06)' },
-  idle:      { border: '#f59e0b', glow: 'rgba(245,158,11,0.10)',  bg: 'rgba(245,158,11,0.05)' },
-  completed: { border: '#10b981', glow: 'rgba(16,185,129,0.10)',  bg: 'rgba(16,185,129,0.05)' },
-  failed:    { border: '#ef4444', glow: 'rgba(239,68,68,0.12)',   bg: 'rgba(239,68,68,0.06)' },
-  killed:    { border: '#6b7280', glow: 'rgba(107,114,128,0.08)', bg: 'transparent' },
+const statusAccent: Record<string, { border: string; glow: string }> = {
+  running:   { border: '#3b82f6', glow: 'rgba(59,130,246,0.12)' },
+  idle:      { border: '#f59e0b', glow: 'rgba(245,158,11,0.10)' },
+  completed: { border: '#10b981', glow: 'rgba(16,185,129,0.10)' },
+  failed:    { border: '#ef4444', glow: 'rgba(239,68,68,0.12)' },
+  killed:    { border: '#6b7280', glow: 'rgba(107,114,128,0.08)' },
 }
 
 export function AgentCard({ agent, depth = 0 }: AgentCardProps) {
@@ -76,13 +76,11 @@ export function AgentCard({ agent, depth = 0 }: AgentCardProps) {
       style={{ marginLeft: depth * 24, marginBottom: '8px' }}
       className="group relative"
     >
-      {/* Glass card */}
+      {/* Card */}
       <div
         className="relative rounded-xl overflow-hidden"
         style={{
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          background: `linear-gradient(135deg, var(--color-bg-elevated) 0%, ${accent.bg} 100%)`,
+          background: 'var(--color-bg-elevated)',
           border: `1px solid var(--color-border)`,
           borderLeft: `3px solid ${accent.border}`,
           boxShadow: `0 4px 20px ${accent.glow}, 0 1px 4px rgba(0,0,0,0.2)`,
@@ -117,15 +115,19 @@ export function AgentCard({ agent, depth = 0 }: AgentCardProps) {
           {/* Task description */}
           {agent.task && (
             <p
-              className="mt-2 text-xs leading-relaxed line-clamp-2"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="mt-2 line-clamp-2"
+              style={{
+                fontSize: '13px',
+                lineHeight: '1.6',
+                color: 'var(--color-text-secondary)',
+              }}
             >
               {agent.task}
             </p>
           )}
 
           {/* Stats row */}
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex items-center gap-4 mt-3">
             <div
               className="flex items-center gap-1 text-[11px]"
               style={{ color: 'var(--color-text-muted)' }}

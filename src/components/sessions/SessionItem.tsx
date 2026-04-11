@@ -35,19 +35,24 @@ export function SessionItem({ session }: SessionItemProps) {
   const { activeSessionId, setActiveSession } = useSessionsStore()
   const isActive = activeSessionId === session.id
   const ChannelIcon = channelIcons[session.channel || 'default'] || channelIcons.default
+  const isActiveDot = session.status === 'active'
 
   return (
     <motion.div
       layout
       onClick={() => setActiveSession(session.id)}
-      className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer rounded-lg transition-all"
+      className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all"
       style={{
-        background: isActive ? 'var(--color-bg-active)' : 'transparent',
+        background: isActive ? 'var(--color-bg-elevated)' : 'transparent',
         borderLeft: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
-        paddingLeft: isActive ? '13px' : '16px',
+        borderRadius: '12px',
+        paddingLeft: isActive ? '13px' : '12px',
       }}
       onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.background = 'var(--color-bg-hover)'
+        if (!isActive) {
+          e.currentTarget.style.background =
+            'linear-gradient(to right, rgba(16, 185, 129, 0.04), transparent)'
+        }
       }}
       onMouseLeave={(e) => {
         if (!isActive) e.currentTarget.style.background = 'transparent'
@@ -61,19 +66,26 @@ export function SessionItem({ session }: SessionItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-1">
           <span
-            className="text-xs font-medium truncate"
-            style={{ color: 'var(--color-text-primary)' }}
+            className="truncate"
+            style={{
+              fontSize: '13px',
+              fontWeight: 500,
+              color: 'var(--color-text-primary)',
+            }}
           >
             {session.label || `Session ${session.id.slice(0, 8)}`}
           </span>
-          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--color-text-muted)' }}>
+          <span
+            className="flex-shrink-0 tabular-nums"
+            style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}
+          >
             {timeAgo(session.lastMessageAt)}
           </span>
         </div>
         {session.lastMessagePreview && (
           <p
-            className="text-[11px] truncate mt-0.5"
-            style={{ color: 'var(--color-text-muted)' }}
+            className="truncate mt-0.5"
+            style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}
           >
             {session.lastMessagePreview}
           </p>
@@ -82,8 +94,15 @@ export function SessionItem({ session }: SessionItemProps) {
 
       {/* Status dot */}
       <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: statusColors[session.status] || 'var(--color-text-muted)' }}
+        className={isActiveDot ? 'session-dot-pulse' : ''}
+        style={{
+          display: 'inline-block',
+          width: '6px',
+          height: '6px',
+          borderRadius: '9999px',
+          flexShrink: 0,
+          background: statusColors[session.status] || 'var(--color-text-muted)',
+        }}
       />
     </motion.div>
   )

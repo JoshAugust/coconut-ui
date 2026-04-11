@@ -226,17 +226,19 @@ export function MemoryBrowser({
                 >
                   <motion.div
                     animate={{
-                      borderColor: isHovered ? `${config.color}30` : 'var(--color-border-subtle)',
+                      borderColor: isHovered
+                        ? `${config.color}40`
+                        : isExpanded
+                        ? `${config.color}25`
+                        : 'var(--color-border-subtle)',
                       boxShadow: isHovered
                         ? `0 4px 20px ${config.glow}, 0 0 0 1px ${config.color}20`
-                        : '0 1px 4px rgba(0,0,0,0.08)',
+                        : '0 1px 4px rgba(0,0,0,0.12)',
                     }}
                     transition={{ duration: 0.2 }}
                     className="rounded-xl cursor-pointer overflow-hidden"
                     style={{
-                      background: 'rgba(18,18,28,0.65)',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
+                      background: 'var(--color-bg-elevated)',
                       border: '1px solid var(--color-border-subtle)',
                     }}
                     onClick={() => setExpandedId(isExpanded ? null : memory.id)}
@@ -252,20 +254,22 @@ export function MemoryBrowser({
                     />
 
                     <div className="flex items-center gap-2.5 px-3 py-2.5">
-                      {/* Source icon */}
+                      {/* Source icon badge — 24px */}
                       <motion.div
                         animate={{
                           boxShadow: isHovered ? `0 0 10px ${config.glow}` : '0 0 0px transparent',
                         }}
                         transition={{ duration: 0.2 }}
-                        className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                        className="rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{
+                          width: '24px',
+                          height: '24px',
                           background: `${config.color}18`,
                           border: `1px solid ${config.color}30`,
                           color: config.color,
                         }}
                       >
-                        <config.icon size={12} />
+                        <config.icon size={13} />
                       </motion.div>
 
                       {/* Title + relevance */}

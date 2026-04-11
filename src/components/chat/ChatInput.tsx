@@ -10,6 +10,8 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, disabled = false, placeholder = 'Type a message…' }: ChatInputProps) {
   const [text, setText] = useState('')
+  const [focused, setFocused] = useState(false)
+  const [sendHovered, setSendHovered] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const canSend = text.trim().length > 0 && !disabled
 
@@ -25,7 +27,6 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
     if (!canSend) return
     onSend(text.trim())
     setText('')
-    // Reset height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
@@ -45,10 +46,18 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
       className="px-4 pb-4 pt-2"
     >
       <div
-        className="glass flex items-end gap-2 px-3 py-2"
+        className="flex items-end gap-2 px-3 py-2"
         style={{
-          borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-lg)',
+          borderRadius: '16px',
+          background: 'var(--color-bg-elevated)',
+          border: focused
+            ? '1px solid var(--color-primary)'
+            : '1px solid var(--color-border)',
+          boxShadow: focused
+            ? '0 0 0 3px var(--color-primary-muted)'
+            : 'none',
+          transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+          minHeight: '44px',
         }}
       >
         {/* Attach button */}
@@ -60,7 +69,7 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
             background: 'transparent',
             border: 'none',
             color: 'var(--color-text-muted)',
-            borderRadius: 'var(--radius-sm)',
+            borderRadius: '6px',
           }}
         >
           <Paperclip size={18} />
@@ -72,16 +81,22 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
-          className="flex-1 resize-none outline-none text-sm py-2 leading-relaxed"
+          className="flex-1 resize-none outline-none leading-relaxed placeholder:text-[14px] placeholder:text-[#6c6c88]"
           style={{
             background: 'transparent',
             color: 'var(--color-text-primary)',
             border: 'none',
             fontFamily: 'var(--font-sans)',
+            fontSize: '14px',
             maxHeight: '160px',
+            minHeight: '28px',
+            paddingTop: '6px',
+            paddingBottom: '6px',
           }}
         />
 
@@ -101,18 +116,22 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
         <motion.button
           onClick={handleSend}
           disabled={!canSend}
-          whileHover={canSend ? { scale: 1.05 } : {}}
+          onHoverStart={() => setSendHovered(true)}
+          onHoverEnd={() => setSendHovered(false)}
           whileTap={canSend ? { scale: 0.95 } : {}}
-          className="p-2.5 shrink-0 cursor-pointer mb-0.5"
+          className="p-2.5 shrink-0 mb-0.5"
           style={{
             background: canSend
-              ? 'linear-gradient(135deg, var(--color-primary), var(--color-accent))'
+              ? 'linear-gradient(135deg, #10b981, #0891b2)'
               : 'var(--color-bg-tertiary)',
             border: 'none',
-            borderRadius: 'var(--radius-md)',
+            borderRadius: '12px',
             color: canSend ? 'white' : 'var(--color-text-muted)',
-            transition: 'all var(--transition-base)',
-            boxShadow: canSend ? 'var(--shadow-glow)' : 'none',
+            cursor: canSend ? 'pointer' : 'default',
+            transition: 'box-shadow 0.15s ease, background 0.15s ease',
+            boxShadow: canSend && sendHovered
+              ? '0 0 12px rgba(16, 185, 129, 0.3)'
+              : 'none',
           }}
         >
           <Send size={16} />

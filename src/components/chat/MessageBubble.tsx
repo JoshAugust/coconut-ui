@@ -56,7 +56,7 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
         ease: [0.16, 1, 0.3, 1],
       }}
       className={`flex gap-3.5 group ${isUser ? 'flex-row-reverse' : ''}`}
-      style={{ padding: '10px 0' }}
+      style={{ padding: '14px 0' }}
     >
       {/* Avatar */}
       <div
@@ -96,9 +96,10 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
                 : '20px 20px 20px 6px',
               padding: '14px 18px',
               background: isUser
-                ? 'linear-gradient(135deg, var(--color-primary), #0ea5e9)'
-                : 'var(--color-bg-secondary)',
-              border: isUser ? 'none' : '1px solid var(--color-border)',
+                ? 'linear-gradient(135deg, #10b981, #0891b2)'
+                : 'var(--color-bg-elevated)',
+              borderLeft: isUser ? 'none' : '2px solid var(--color-accent)',
+              border: isUser ? 'none' : undefined,
               color: isUser ? 'white' : 'var(--color-text-primary)',
               boxShadow: isUser
                 ? '0 4px 16px rgba(16, 185, 129, 0.2)'
@@ -106,9 +107,9 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
             }}
           >
             {isUser ? (
-              <p className="text-[14px] leading-[1.65] whitespace-pre-wrap">{message.content}</p>
+              <p className="text-[14px] leading-[1.7] whitespace-pre-wrap">{message.content}</p>
             ) : (
-              <div className="text-[14px] leading-[1.65]">
+              <div className="text-[14px] leading-[1.7]">
                 <MarkdownRenderer content={message.content} />
               </div>
             )}
@@ -138,9 +139,9 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
             'id' in block ? <ToolCallCard key={block.id} block={block} /> : null
           )}
 
-        {/* Meta info — more polished */}
+        {/* Meta info pills */}
         {(message.model || message.tokenUsage) && (
-          <div className="flex items-center gap-2 px-1 opacity-60">
+          <div className="flex items-center gap-2 px-1">
             {message.model && (
               <span
                 className="text-[10px] font-medium px-2 py-0.5 rounded-md"
@@ -155,8 +156,12 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
             )}
             {message.tokenUsage?.cost != null && (
               <span
-                className="text-[10px] font-mono"
-                style={{ color: 'var(--color-text-muted)' }}
+                className="text-[10px] font-mono px-2 py-0.5 rounded-md"
+                style={{
+                  color: 'var(--color-text-muted)',
+                  background: 'var(--color-bg-tertiary)',
+                  border: '1px solid var(--color-border-subtle)',
+                }}
               >
                 ${message.tokenUsage.cost.toFixed(4)}
               </span>
