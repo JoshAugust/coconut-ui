@@ -6,7 +6,7 @@
   <script>
     // GitHub Pages SPA redirect hack
     // Converts path-based routes into query params, then index.html restores them
-    var pathSegmentsToKeep = 1;
+    var pathSegmentsToKeep = 0;
     var l = window.location;
     l.replace(
       l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
