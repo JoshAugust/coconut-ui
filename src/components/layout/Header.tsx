@@ -1,4 +1,4 @@
-import { Sun, Moon, Command } from 'lucide-react'
+import { Sun, Moon, Command, Menu } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { useConnectionStore } from '../../stores/connection'
@@ -22,7 +22,12 @@ const statusConfig: Record<string, { color: string; label: string }> = {
   error: { color: 'var(--color-error)', label: 'Error' },
 }
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void
+  showMenuButton?: boolean
+}
+
+export function Header({ onMenuClick, showMenuButton }: HeaderProps) {
   const location = useLocation()
   const { status, isDemo } = useConnectionStore()
   const { mode, toggleMode } = useThemeStore()
@@ -34,17 +39,41 @@ export function Header() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex items-center justify-between h-14 px-5 shrink-0"
+      className="flex items-center justify-between shrink-0"
       style={{
+        height: '56px',
+        padding: '0 16px',
         borderBottom: '1px solid var(--color-border-subtle)',
         background: 'var(--color-glass)',
         backdropFilter: 'blur(var(--glass-blur))',
         WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        zIndex: 'var(--z-header)',
+        zIndex: 'var(--z-header)' as any,
       }}
     >
-      {/* Left: Page title */}
-      <div className="flex items-center gap-3">
+      {/* Left: Hamburger (mobile) + Page title */}
+      <div className="flex items-center gap-2">
+        {showMenuButton && (
+          <motion.button
+            onClick={onMenuClick}
+            whileTap={{ scale: 0.9 }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-text-secondary)',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              /* Touch-friendly: 44px minimum hit target */
+              minWidth: '44px',
+              minHeight: '44px',
+            }}
+          >
+            <Menu size={20} />
+          </motion.button>
+        )}
         <h2
           className="text-sm font-semibold"
           style={{ color: 'var(--color-text-primary)' }}
@@ -54,26 +83,32 @@ export function Header() {
       </div>
 
       {/* Right: Status + Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Connection status */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <div
             className="pulse-dot"
             style={{ background: color }}
           />
-          <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+          <span
+            className="text-xs font-medium"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
             {isDemo ? 'Demo' : label}
           </span>
         </div>
 
-        {/* Separator */}
-        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
+        {/* Separator — hide on very small screens */}
+        <div
+          className="w-px h-4 hidden sm:block"
+          style={{ background: 'var(--color-border)' }}
+        />
 
-        {/* Command palette hint */}
+        {/* Command palette hint — hide on mobile */}
         <motion.button
           whileHover={{ backgroundColor: 'var(--color-bg-hover)' }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 px-2 py-1 cursor-pointer"
+          className="hidden sm:flex items-center gap-1.5 px-2 py-1 cursor-pointer"
           style={{
             background: 'transparent',
             border: '1px solid var(--color-border)',
@@ -88,17 +123,23 @@ export function Header() {
           <span className="text-[10px] font-medium">K</span>
         </motion.button>
 
-        {/* Theme toggle */}
+        {/* Theme toggle — always visible, but touch-friendly size on mobile */}
         <motion.button
           onClick={toggleMode}
           whileHover={{ backgroundColor: 'var(--color-bg-hover)' }}
           whileTap={{ scale: 0.9, rotate: 180 }}
-          className="p-2 cursor-pointer"
           style={{
             background: 'transparent',
             border: 'none',
             borderRadius: 'var(--radius-sm)',
             color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            /* Touch-friendly */
+            minWidth: '40px',
+            minHeight: '40px',
           }}
           title={mode === 'dark' ? 'Switch to light' : 'Switch to dark'}
         >

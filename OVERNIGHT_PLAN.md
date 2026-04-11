@@ -49,8 +49,8 @@
 ## Phase 6: Agent & Panel Polish
 - [ ] Agent tree with animated connection lines
 - [x] Status badges with pulse animations
-- [ ] Memory browser with glass cards
-- [ ] Tool timeline with animated entry
+- [x] Memory browser with glass cards
+- [x] Tool timeline with animated entry
 - [x] Cron scheduler with toggle animations
 - [x] AgentCard glassmorphism + status glow
 

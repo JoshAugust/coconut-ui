@@ -49,9 +49,10 @@
 - [x] CronScheduler: animated spring toggle switch (proper on/off slide), glass cards, urgency-colored next-run times (red=soon, amber=medium, muted=later), animated run button (Play→Zap flash), expand/collapse with spring chevron
 - Commit: 45dfd97
 
-## Phase 6 Remaining — QUEUED
-- [ ] MemoryBrowser glass card upgrade
-- [ ] ToolTimeline glass + entry animation polish
+## Phase 6 Remaining ✅ COMPLETE
+- [x] MemoryBrowser glass card upgrade — backdrop-blur cards, source-colored hover glow, staggered entrances, animated relevance bars, improved search + filter pills
+- [x] ToolTimeline glass + entry animation polish — glass cards with left border accent, staggered slide-in, running shimmer bar, pulsing timeline dots, labeled code sections
+- Commit: 7b7e528
 
 ## Phase 7: Mobile & PWA — QUEUED
 ## Phase 8: Testing & Ship — QUEUED
