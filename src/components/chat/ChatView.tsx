@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, ArrowDown } from 'lucide-react'
 import { useMessagesStore } from '../../stores/messages'
