@@ -56,8 +56,13 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass overflow-hidden"
-      style={{ borderRadius: 'var(--radius-lg)' }}
+      className="overflow-hidden w-full"
+      style={{
+        borderRadius: '14px',
+        background: 'var(--color-bg-secondary)',
+        border: '1px solid var(--color-border)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+      }}
     >
       {/* Header */}
       <div
