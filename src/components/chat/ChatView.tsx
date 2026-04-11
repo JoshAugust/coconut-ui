@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, ArrowDown } from 'lucide-react'
 import { useMessagesStore } from '../../stores/messages'
@@ -7,16 +7,22 @@ import { useConnectionStore } from '../../stores/connection'
 import { MessageBubble } from './MessageBubble'
 import { ChatInput } from './ChatInput'
 
+const EMPTY_MESSAGES: import('../../types').NormalizedMessage[] = []
+
 export function ChatView() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const [isScrolledUp, setIsScrolledUp] = useState(false)
   const [newMessageCount, setNewMessageCount] = useState(0)
 
-  const activeSessionId = useSessionsStore((s) => s.activeSessionId) || 'main'
-  const messages = useMessagesStore((s) => s.messagesBySession[activeSessionId] || [])
+  const activeSessionId = useSessionsStore((s) => s.activeSessionId) ?? 'main'
+  const messages = useMessagesStore((s) => s.messagesBySession[activeSessionId]) ?? EMPTY_MESSAGES
   const streamingContent = useMessagesStore((s) => s.streamingContent)
-  const { setMessages, addMessage, updateStreamingContent, finalizeStream, setLoadingHistory } = useMessagesStore()
+  const setMessages = useMessagesStore((s) => s.setMessages)
+  const addMessage = useMessagesStore((s) => s.addMessage)
+  const updateStreamingContent = useMessagesStore((s) => s.updateStreamingContent)
+  const finalizeStream = useMessagesStore((s) => s.finalizeStream)
+  const setLoadingHistory = useMessagesStore((s) => s.setLoadingHistory)
   const status = useConnectionStore((s) => s.status)
   const getAdapter = useConnectionStore((s) => s.getAdapter)
 
@@ -38,13 +44,16 @@ export function ChatView() {
   }, [activeSessionId, status, getAdapter, setMessages, setLoadingHistory])
 
   // Subscribe to live messages
+  const isScrolledUpRef = useRef(isScrolledUp)
+  isScrolledUpRef.current = isScrolledUp
+
   useEffect(() => {
     if (status !== 'connected') return
     const adapter = getAdapter()
 
     const unsubMsg = adapter.onMessage((msg) => {
       addMessage({ ...msg, sessionId: msg.sessionId || activeSessionId })
-      if (isScrolledUp) {
+      if (isScrolledUpRef.current) {
         setNewMessageCount((c) => c + 1)
       }
     })
@@ -60,14 +69,15 @@ export function ChatView() {
       unsubMsg()
       unsubStream()
     }
-  }, [status, activeSessionId, getAdapter, addMessage, updateStreamingContent, finalizeStream, isScrolledUp])
+  }, [status, activeSessionId, getAdapter, addMessage, updateStreamingContent, finalizeStream])
 
   // Auto-scroll to bottom
+  const messageCount = messages.length
   useEffect(() => {
     if (!isScrolledUp) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, streamingContent, isScrolledUp])
+  }, [messageCount, streamingContent, isScrolledUp])
 
   // Scroll detection
   const handleScroll = useCallback(() => {
