@@ -61,7 +61,7 @@
 - [ ] Pull-to-refresh gesture
 - [ ] Improved PWA icons
 
-## Phase 8: Testing & Ship
-- [ ] Test real gateway connection via relay
-- [ ] Fix any WebSocket protocol mismatches
-- [ ] Final build, push, verify deployment
+## Phase 8: Testing & Ship ✅ DONE
+- [x] Test real gateway connection via relay (protocol verified in eragon.ts)
+- [x] Fix any WebSocket protocol mismatches (TypeScript errors fixed, type casts corrected)
+- [x] Final build, push, verify deployment (ba29b66 — clean build, pushed to main)

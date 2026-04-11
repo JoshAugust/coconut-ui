@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#0a0f1a"/>
+    </linearGradient>
+    <linearGradient id="emerald" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Full bleed background (maskable icons use the entire canvas) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Ambient glow -->
+  <ellipse cx="256" cy="256" rx="250" ry="250" fill="url(#glow)"/>
+
+  <!-- Safe zone content (within ~80% = 205px from center = 51px inset) -->
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="175" stroke="url(#emerald)" stroke-width="1.5" fill="none" opacity="0.25"/>
+
+  <!-- Center node -->
+  <circle cx="256" cy="256" r="28" fill="url(#emerald)" opacity="0.95"/>
+  <circle cx="256" cy="256" r="36" stroke="url(#emerald)" stroke-width="2" fill="none" opacity="0.4"/>
+
+  <!-- Top-left node (safe zone) -->
+  <circle cx="165" cy="180" r="15" fill="url(#teal)" opacity="0.85"/>
+  <circle cx="165" cy="180" r="21" stroke="url(#teal)" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Top-right node -->
+  <circle cx="347" cy="180" r="15" fill="url(#emerald)" opacity="0.85"/>
+  <circle cx="347" cy="180" r="21" stroke="url(#emerald)" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Bottom node -->
+  <circle cx="256" cy="360" r="15" fill="url(#teal)" opacity="0.85"/>
+  <circle cx="256" cy="360" r="21" stroke="url(#teal)" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Connecting lines -->
+  <line x1="179" y1="188" x2="237" y2="244" stroke="url(#emerald)" stroke-width="2" opacity="0.5"/>
+  <line x1="333" y1="188" x2="275" y2="244" stroke="url(#emerald)" stroke-width="2" opacity="0.5"/>
+  <line x1="256" y1="284" x2="256" y2="344" stroke="url(#teal)" stroke-width="2" opacity="0.5"/>
+</svg>

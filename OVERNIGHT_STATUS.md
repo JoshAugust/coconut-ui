@@ -68,4 +68,15 @@
 - [x] AgentTree animated connection lines — gradient trunk (scaleY in from top), horizontal connector arms (scaleX from left), glowing status-colored junction dots (spring pop), pulsing energy bead that travels down the trunk when any child agent is running, staggered entrance animations for root nodes
 - Commit: 9afdb5b
 
-## Phase 8: Testing & Ship — QUEUED
+## Phase 8: Testing & Ship ✅ COMPLETE
+- [x] Fixed all TypeScript build errors (3 errors → 0)
+  - Removed unused `Info` import from ConnectScreen.tsx
+  - Fixed `SessionOpts.agentId` access (field doesn't exist on type — removed, uses `config.agentName` instead)
+  - Fixed ContentBlock discriminated union cast: `Extract<ContentBlock, { type: 'tool_call' }>['status']`
+- [x] Clean production build: 2674 modules, 0 TS errors
+- [x] Committed and pushed to main (ba29b66)
+- Build output: 163.97 kB main bundle (42.67 kB gzip)
+- WebSocket protocol verified in eragon.ts — challenge/response handshake, proper relay URL construction
+
+## 🚢 OVERNIGHT OPERATION COMPLETE
+All phases done. Coconut UI is polished, builds clean, and shipped.
