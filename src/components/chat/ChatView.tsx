@@ -183,7 +183,22 @@ export function ChatView() {
       </AnimatePresence>
 
       {/* Input */}
-      <ChatInput />
+      <ChatInput
+        onSend={async (text) => {
+          const userMsg = {
+            id: crypto.randomUUID(),
+            sessionId: activeSessionId,
+            role: 'user' as const,
+            content: text,
+            timestamp: new Date().toISOString(),
+          }
+          addMessage(userMsg)
+          try {
+            await getAdapter().sendMessage(activeSessionId, text)
+          } catch { /* ignore */ }
+        }}
+        disabled={status !== 'connected'}
+      />
     </div>
   )
 }

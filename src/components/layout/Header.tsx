@@ -1,4 +1,5 @@
-import { Sun, Moon, Settings, ChevronRight } from 'lucide-react'
+import { Sun, Moon, Command } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 import { useConnectionStore } from '../../stores/connection'
 import { useThemeStore } from '../../stores/theme'
@@ -7,101 +8,109 @@ const routeLabels: Record<string, string> = {
   '/chat': 'Chat',
   '/dashboard': 'Dashboard',
   '/agents': 'Agents',
+  '/memory': 'Memory',
+  '/tools': 'Tools',
+  '/cron': 'Scheduler',
+  '/settings': 'Settings',
 }
 
-const statusColors: Record<string, string> = {
-  connected: 'var(--color-success)',
-  connecting: 'var(--color-warning)',
-  reconnecting: 'var(--color-warning)',
-  disconnected: 'var(--color-text-muted)',
-  error: 'var(--color-error)',
-}
-
-const statusLabels: Record<string, string> = {
-  connected: 'Connected',
-  connecting: 'Connecting…',
-  reconnecting: 'Reconnecting…',
-  disconnected: 'Disconnected',
-  error: 'Error',
+const statusConfig: Record<string, { color: string; label: string }> = {
+  connected: { color: 'var(--color-success)', label: 'Connected' },
+  connecting: { color: 'var(--color-warning)', label: 'Connecting…' },
+  reconnecting: { color: 'var(--color-warning)', label: 'Reconnecting…' },
+  disconnected: { color: 'var(--color-text-muted)', label: 'Disconnected' },
+  error: { color: 'var(--color-error)', label: 'Error' },
 }
 
 export function Header() {
   const location = useLocation()
-  const status = useConnectionStore((s) => s.status)
+  const { status, isDemo } = useConnectionStore()
   const { mode, toggleMode } = useThemeStore()
-
-  const basePath = '/' + (location.pathname.split('/')[1] || 'chat')
-  const pageLabel = routeLabels[basePath] || 'Chat'
+  const { color, label } = statusConfig[status] || statusConfig.disconnected
+  const pageLabel = routeLabels[location.pathname] || 'Coconut'
 
   return (
-    <header
-      className="flex items-center justify-between px-5 h-14 shrink-0"
+    <motion.header
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex items-center justify-between h-14 px-5 shrink-0"
       style={{
-        background: 'var(--color-bg-secondary)',
         borderBottom: '1px solid var(--color-border-subtle)',
+        background: 'var(--color-glass)',
+        backdropFilter: 'blur(var(--glass-blur))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur))',
+        zIndex: 'var(--z-header)',
       }}
     >
-      {/* Left — Breadcrumb */}
-      <div className="flex items-center gap-1.5">
-        <span style={{ color: 'var(--color-text-muted)' }} className="text-sm">
-          Coconut
-        </span>
-        <ChevronRight size={14} style={{ color: 'var(--color-text-muted)' }} />
-        <span style={{ color: 'var(--color-text-primary)' }} className="text-sm font-medium">
+      {/* Left: Page title */}
+      <div className="flex items-center gap-3">
+        <h2
+          className="text-sm font-semibold"
+          style={{ color: 'var(--color-text-primary)' }}
+        >
           {pageLabel}
-        </span>
+        </h2>
       </div>
 
-      {/* Center — reserved for command palette */}
-      <div className="flex-1" />
-
-      {/* Right — Status, theme toggle, settings */}
+      {/* Right: Status + Controls */}
       <div className="flex items-center gap-3">
         {/* Connection status */}
         <div className="flex items-center gap-2">
-          <span
-            className="inline-block w-2 h-2 rounded-full"
-            style={{
-              background: statusColors[status] || 'var(--color-text-muted)',
-              boxShadow: status === 'connected' ? `0 0 6px ${statusColors[status]}` : undefined,
-            }}
+          <div
+            className="pulse-dot"
+            style={{ background: color }}
           />
-          <span className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {statusLabels[status] || status}
+          <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+            {isDemo ? 'Demo' : label}
           </span>
         </div>
 
-        {/* Theme toggle */}
-        <button
-          onClick={toggleMode}
-          className="p-2 rounded-md cursor-pointer"
-          style={{
-            color: 'var(--color-text-secondary)',
-            borderRadius: 'var(--radius-sm)',
-            transition: 'var(--transition-fast)',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
+        {/* Separator */}
+        <div className="w-px h-4" style={{ background: 'var(--color-border)' }} />
 
-        {/* Settings */}
-        <button
-          className="p-2 rounded-md cursor-pointer"
+        {/* Command palette hint */}
+        <motion.button
+          whileHover={{ backgroundColor: 'var(--color-bg-hover)' }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1.5 px-2 py-1 cursor-pointer"
           style={{
-            color: 'var(--color-text-secondary)',
+            background: 'transparent',
+            border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-sm)',
-            transition: 'var(--transition-fast)',
+            color: 'var(--color-text-muted)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          title="Settings"
+          onClick={() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+          }}
         >
-          <Settings size={16} />
-        </button>
+          <Command size={12} />
+          <span className="text-[10px] font-medium">K</span>
+        </motion.button>
+
+        {/* Theme toggle */}
+        <motion.button
+          onClick={toggleMode}
+          whileHover={{ backgroundColor: 'var(--color-bg-hover)' }}
+          whileTap={{ scale: 0.9, rotate: 180 }}
+          className="p-2 cursor-pointer"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-text-secondary)',
+          }}
+          title={mode === 'dark' ? 'Switch to light' : 'Switch to dark'}
+        >
+          <motion.div
+            initial={false}
+            animate={{ rotate: mode === 'dark' ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
+          >
+            {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </motion.div>
+        </motion.button>
       </div>
-    </header>
+    </motion.header>
   )
 }

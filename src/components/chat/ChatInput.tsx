@@ -1,51 +1,33 @@
-import { useState, useRef, useCallback } from 'react'
-import { SendHorizontal, Paperclip } from 'lucide-react'
-import { useConnectionStore } from '../../stores/connection'
-import { useMessagesStore } from '../../stores/messages'
-import { useSessionsStore } from '../../stores/sessions'
+import { useState, useRef, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Send, Paperclip, Sparkles } from 'lucide-react'
 
-export function ChatInput() {
+interface ChatInputProps {
+  onSend: (text: string) => void
+  disabled?: boolean
+  placeholder?: string
+}
+
+export function ChatInput({ onSend, disabled = false, placeholder = 'Type a message…' }: ChatInputProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const getAdapter = useConnectionStore((s) => s.getAdapter)
-  const connectionStatus = useConnectionStore((s) => s.status)
-  const { sending, setSending, addMessage } = useMessagesStore()
-  const activeSessionId = useSessionsStore((s) => s.activeSessionId)
+  const canSend = text.trim().length > 0 && !disabled
 
-  const adjustHeight = useCallback(() => {
-    const el = textareaRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    el.style.height = Math.min(el.scrollHeight, 200) + 'px'
-  }, [])
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current
+    if (!ta) return
+    ta.style.height = 'auto'
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`
+  }, [text])
 
-  const handleSend = async () => {
-    const trimmed = text.trim()
-    if (!trimmed || sending || connectionStatus !== 'connected') return
-
-    const sessionId = activeSessionId || 'main'
-
-    // Add user message optimistically
-    addMessage({
-      id: crypto.randomUUID(),
-      sessionId,
-      role: 'user',
-      content: trimmed,
-      timestamp: new Date().toISOString(),
-    })
-
+  const handleSend = () => {
+    if (!canSend) return
+    onSend(text.trim())
     setText('')
+    // Reset height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-    }
-
-    setSending(true)
-    try {
-      await getAdapter().sendMessage(sessionId, trimmed)
-    } catch (err) {
-      console.error('Send failed:', err)
-    } finally {
-      setSending(false)
     }
   }
 
@@ -56,77 +38,93 @@ export function ChatInput() {
     }
   }
 
-  const showSlashHint = text.startsWith('/')
-
   return (
-    <div
-      className="px-4 py-3 shrink-0"
-      style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-secondary)' }}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="px-4 pb-4 pt-2"
     >
-      {/* Slash command hint */}
-      {showSlashHint && (
-        <div
-          className="text-[11px] px-3 py-1.5 mb-2 rounded-md"
-          style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-muted)' }}
-        >
-          💡 Slash commands: /new, /model, /compact, /think, /status
-        </div>
-      )}
-
       <div
-        className="flex items-end gap-2 rounded-xl px-3 py-2"
+        className="glass flex items-end gap-2 px-3 py-2"
         style={{
-          background: 'var(--color-bg-tertiary)',
-          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-lg)',
         }}
       >
-        {/* Attachment button */}
-        <button
-          className="p-1.5 rounded-md flex-shrink-0 mb-0.5"
-          style={{ color: 'var(--color-text-muted)' }}
-          title="Attach file"
+        {/* Attach button */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="p-2 shrink-0 cursor-pointer mb-0.5"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--color-text-muted)',
+            borderRadius: 'var(--radius-sm)',
+          }}
         >
           <Paperclip size={18} />
-        </button>
+        </motion.button>
 
         {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => {
-            setText(e.target.value)
-            adjustHeight()
-          }}
+          onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Message your agent..."
+          placeholder={placeholder}
+          disabled={disabled}
           rows={1}
-          disabled={sending || connectionStatus !== 'connected'}
-          className="flex-1 resize-none outline-none text-sm leading-relaxed bg-transparent"
+          className="flex-1 resize-none outline-none text-sm py-2 leading-relaxed"
           style={{
+            background: 'transparent',
             color: 'var(--color-text-primary)',
-            minHeight: '24px',
-            maxHeight: '200px',
+            border: 'none',
+            fontFamily: 'var(--font-sans)',
+            maxHeight: '160px',
           }}
         />
 
+        {/* Sparkle indicator when typing */}
+        {text.trim().length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
+            className="shrink-0 mb-0.5"
+          >
+            <Sparkles size={14} style={{ color: 'var(--color-primary)', opacity: 0.5 }} />
+          </motion.div>
+        )}
+
         {/* Send button */}
-        <button
+        <motion.button
           onClick={handleSend}
-          disabled={!text.trim() || sending || connectionStatus !== 'connected'}
-          className="p-2 rounded-lg flex-shrink-0 mb-0.5 transition-all disabled:opacity-30"
+          disabled={!canSend}
+          whileHover={canSend ? { scale: 1.05 } : {}}
+          whileTap={canSend ? { scale: 0.95 } : {}}
+          className="p-2.5 shrink-0 cursor-pointer mb-0.5"
           style={{
-            background: text.trim() ? 'var(--color-primary)' : 'transparent',
-            color: text.trim() ? 'white' : 'var(--color-text-muted)',
+            background: canSend
+              ? 'linear-gradient(135deg, var(--color-primary), var(--color-accent))'
+              : 'var(--color-bg-tertiary)',
+            border: 'none',
+            borderRadius: 'var(--radius-md)',
+            color: canSend ? 'white' : 'var(--color-text-muted)',
+            transition: 'all var(--transition-base)',
+            boxShadow: canSend ? 'var(--shadow-glow)' : 'none',
           }}
-          title="Send (Enter)"
         >
-          <SendHorizontal size={18} />
-        </button>
+          <Send size={16} />
+        </motion.button>
       </div>
 
-      <p className="text-[10px] text-center mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
-        Enter to send · Shift+Enter for new line
-      </p>
-    </div>
+      {/* Hint */}
+      <div className="flex items-center justify-center gap-3 mt-2">
+        <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+          Enter to send · Shift+Enter for new line · ⌘K for commands
+        </span>
+      </div>
+    </motion.div>
   )
 }
