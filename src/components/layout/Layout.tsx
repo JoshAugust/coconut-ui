@@ -1,65 +1,78 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PanelLeft } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 
-interface LayoutProps {
-  children: ReactNode
-}
-
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const location = useLocation()
 
   return (
-    <div className="h-full w-full flex" style={{ background: 'var(--color-bg-primary)' }}>
+    <div className="flex h-full w-full relative">
+      {/* Aurora background (persists across pages) */}
+      <div className="aurora-bg" />
+      <div className="aurora-orb-1" />
+      <div className="aurora-orb-2" />
+
       {/* Sidebar */}
       <AnimatePresence mode="wait">
         {sidebarOpen && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
+            animate={{ width: 260, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="h-full flex-shrink-0 overflow-hidden"
-            style={{
-              background: 'var(--color-bg-secondary)',
-              borderRight: '1px solid var(--color-border)',
-            }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="shrink-0 overflow-hidden"
+            style={{ zIndex: 'var(--z-sidebar)' }}
           >
-            <div className="h-full w-[280px]">
-              <Sidebar onCollapse={() => setSidebarOpen(false)} />
-            </div>
+            <Sidebar onCollapse={() => setSidebarOpen(false)} />
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 h-full">
-        <Header />
-        <main className="flex-1 min-h-0 overflow-hidden">
-          {children}
-        </main>
-      </div>
-
-      {/* Floating sidebar toggle when collapsed */}
+      {/* Collapsed sidebar toggle */}
       {!sidebarOpen && (
         <motion.button
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          onClick={() => setSidebarOpen(true)}
-          className="fixed top-3 left-3 z-50 p-2 rounded-lg"
+          className="fixed top-4 left-4 p-2 cursor-pointer"
           style={{
-            background: 'var(--color-bg-elevated)',
-            border: '1px solid var(--color-border)',
+            zIndex: 'var(--z-header)',
+            background: 'var(--color-glass)',
+            backdropFilter: 'blur(var(--glass-blur))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur))',
+            border: '1px solid var(--color-glass-border)',
+            borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-secondary)',
-            boxShadow: 'var(--shadow-md)',
           }}
-          title="Open sidebar"
+          whileHover={{ backgroundColor: 'var(--color-glass-hover)' }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setSidebarOpen(true)}
         >
           <PanelLeft size={18} />
         </motion.button>
       )}
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <Header />
+        <main className="flex-1 overflow-hidden relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="h-full"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   )
 }

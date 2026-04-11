@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Wifi, Loader2, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Wifi, Loader2, AlertCircle, Zap, Shield } from 'lucide-react'
 import { useConnectionStore } from '../../stores/connection'
 
 export function ConnectScreen() {
@@ -10,217 +10,257 @@ export function ConnectScreen() {
   const [agentName, setAgentName] = useState(config?.agentName || '')
   const connecting = status === 'connecting'
 
-  // Auto-connect if we have saved config
-  useEffect(() => {
-    if (config?.gatewayUrl && config?.token && status === 'disconnected') {
-      connect(config).catch(() => { /* show error */ })
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!url.trim() || !token.trim()) return
+    if (!url || !token) return
     try {
-      await connect({ gatewayUrl: url.trim(), token: token.trim(), agentName: agentName.trim() || undefined })
-    } catch {
-      // Error is set in store
-    }
+      await connect({ gatewayUrl: url, token, agentName: agentName || undefined })
+    } catch { /* error state handled by store */ }
   }
 
   return (
-    <div
-      className="h-full w-full flex items-center justify-center relative overflow-hidden"
-      style={{ background: 'var(--color-bg-primary)' }}
-    >
-      {/* Animated background gradient */}
+    <div className="h-full w-full flex items-center justify-center relative overflow-hidden">
+      {/* Aurora background */}
+      <div className="aurora-bg" />
+      <div className="aurora-orb-1" />
+      <div className="aurora-orb-2" />
+
+      {/* Subtle grid overlay */}
       <div
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 pointer-events-none opacity-[0.02]"
         style={{
-          background: 'radial-gradient(ellipse at 30% 20%, var(--color-primary) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, var(--color-accent) 0%, transparent 50%)',
-          filter: 'blur(80px)',
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
         }}
       />
 
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-md mx-4"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="glass-lg w-full max-w-md mx-4"
+        style={{
+          borderRadius: 'var(--radius-2xl)',
+          padding: '40px',
+        }}
       >
-        <div
-          className="p-8 rounded-2xl"
-          style={{
-            background: 'var(--color-bg-secondary)',
-            border: '1px solid var(--color-border)',
-            boxShadow: 'var(--shadow-lg)',
-          }}
+        {/* Logo */}
+        <motion.div
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
         >
-          {/* Logo / Title */}
-          <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-              style={{ background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` }}
-            >
-              <span className="text-3xl">🥥</span>
-            </motion.div>
-            <h1
-              className="text-2xl font-bold"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              Coconut
-            </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              Connect to your agent
-            </p>
-          </div>
+          <motion.div
+            className="inline-block text-5xl mb-3"
+            animate={{ rotate: [0, 5, -5, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            🥥
+          </motion.div>
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            Coconut
+          </h1>
+          <p
+            className="text-sm mt-1"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            Universal Agent Dashboard
+          </p>
+        </motion.div>
 
-          {/* Connection Form */}
-          <form onSubmit={handleConnect} className="space-y-4">
-            <div>
+        {/* Form */}
+        <form onSubmit={handleConnect}>
+          <div className="space-y-4">
+            {/* Gateway URL */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
               <label
-                className="block text-xs font-medium mb-1.5"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="block text-xs font-medium mb-1.5 uppercase tracking-wider"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 Gateway URL
               </label>
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="ws://127.0.0.1:19789"
-                disabled={connecting}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
-                style={{
-                  background: 'var(--color-bg-tertiary)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-              />
-            </div>
+              <div className="relative">
+                <Wifi
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--color-text-muted)' }}
+                />
+                <input
+                  type="text"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="wss://your-relay.up.railway.app"
+                  disabled={connecting}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{
+                    background: 'var(--color-bg-tertiary)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    borderRadius: 'var(--radius-lg)',
+                  }}
+                />
+              </div>
+            </motion.div>
 
-            <div>
+            {/* Token */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
               <label
-                className="block text-xs font-medium mb-1.5"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="block text-xs font-medium mb-1.5 uppercase tracking-wider"
+                style={{ color: 'var(--color-text-muted)' }}
               >
                 Token
               </label>
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Your gateway token"
-                disabled={connecting}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
-                style={{
-                  background: 'var(--color-bg-tertiary)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-text-primary)',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
-              />
-            </div>
+              <div className="relative">
+                <Shield
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2"
+                  style={{ color: 'var(--color-text-muted)' }}
+                />
+                <input
+                  type="password"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Gateway auth token"
+                  disabled={connecting}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{
+                    background: 'var(--color-bg-tertiary)',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    borderRadius: 'var(--radius-lg)',
+                  }}
+                />
+              </div>
+            </motion.div>
 
-            <div>
+            {/* Agent Name (optional) */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
               <label
-                className="block text-xs font-medium mb-1.5"
-                style={{ color: 'var(--color-text-secondary)' }}
+                className="block text-xs font-medium mb-1.5 uppercase tracking-wider"
+                style={{ color: 'var(--color-text-muted)' }}
               >
-                Agent Name <span style={{ color: 'var(--color-text-muted)' }}>(optional)</span>
+                Agent Name <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(optional)</span>
               </label>
               <input
                 type="text"
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
-                placeholder="Brock"
+                placeholder="e.g. Brock"
                 disabled={connecting}
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
                 style={{
                   background: 'var(--color-bg-tertiary)',
                   border: '1px solid var(--color-border)',
                   color: 'var(--color-text-primary)',
+                  borderRadius: 'var(--radius-lg)',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--color-primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--color-border)')}
               />
-            </div>
+            </motion.div>
+          </div>
 
-            {/* Error display */}
+          {/* Error */}
+          <AnimatePresence>
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--color-error)' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 mt-4 px-3 py-2.5 rounded-lg text-sm"
+                style={{
+                  background: 'var(--color-error-muted)',
+                  color: 'var(--color-error)',
+                  borderRadius: 'var(--radius-md)',
+                }}
               >
-                <AlertCircle size={16} />
+                <AlertCircle size={14} />
                 <span>{error}</span>
               </motion.div>
             )}
+          </AnimatePresence>
 
-            <button
-              type="submit"
-              disabled={connecting || !url.trim() || !token.trim()}
-              className="w-full py-2.5 rounded-lg font-medium text-sm text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              style={{
-                background: connecting
-                  ? 'var(--color-bg-tertiary)'
-                  : 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
-                color: connecting ? 'var(--color-text-muted)' : 'white',
-              }}
-            >
-              {connecting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Wifi size={16} />
-                  Connect
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 mt-5">
-            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-            <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>or</span>
-            <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-          </div>
-
-          {/* Demo button */}
-          <button
-            onClick={connectDemo}
-            disabled={connecting}
-            className="w-full py-2.5 rounded-lg font-medium text-sm transition-all mt-4"
+          {/* Connect button */}
+          <motion.button
+            type="submit"
+            disabled={connecting || !url || !token}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full py-3 font-medium text-sm flex items-center justify-center gap-2 mt-6 text-white cursor-pointer"
             style={{
-              background: 'var(--color-bg-tertiary)',
-              color: 'var(--color-text-secondary)',
-              border: '1px solid var(--color-border)',
+              background: connecting
+                ? 'var(--color-primary-muted)'
+                : 'linear-gradient(135deg, var(--color-primary), var(--color-accent))',
+              borderRadius: 'var(--radius-lg)',
+              border: 'none',
+              opacity: (!url || !token) ? 0.5 : 1,
+              boxShadow: 'var(--shadow-glow)',
+              transition: 'all var(--transition-base)',
             }}
           >
-            🥥 Try Demo Mode
-          </button>
+            {connecting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Connecting…
+              </>
+            ) : (
+              <>
+                <Zap size={16} />
+                Connect
+              </>
+            )}
+          </motion.button>
+        </form>
 
-          {/* Footer */}
-          <p
-            className="text-center text-xs mt-6"
-            style={{ color: 'var(--color-text-muted)' }}
-          >
-            Coconut — Universal Agent Dashboard
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-3 mt-6">
+          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>or</span>
+          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
         </div>
+
+        {/* Demo button */}
+        <motion.button
+          onClick={connectDemo}
+          disabled={connecting}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full py-3 font-medium text-sm mt-4 cursor-pointer"
+          style={{
+            background: 'var(--color-bg-tertiary)',
+            color: 'var(--color-text-secondary)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-lg)',
+            transition: 'all var(--transition-base)',
+          }}
+        >
+          🥥 Try Demo Mode
+        </motion.button>
+
+        {/* Footer */}
+        <p
+          className="text-center text-xs mt-6"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          Backend-agnostic · Works with any agent system
+        </p>
       </motion.div>
     </div>
   )

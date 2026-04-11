@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   MessageSquare,
   LayoutDashboard,
@@ -9,8 +10,6 @@ import {
   Calendar,
   Settings,
 } from 'lucide-react'
-
-// SessionList may not exist yet — wrap in lazy import
 import { SessionList } from '../sessions/SessionList'
 
 interface SidebarProps {
@@ -28,16 +27,35 @@ const navItems = [
 ]
 
 export function Sidebar({ onCollapse }: SidebarProps) {
+  const location = useLocation()
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Logo / Title */}
+    <motion.div
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="flex flex-col h-full glass-lg"
+      style={{
+        borderRight: '1px solid var(--color-glass-border)',
+        background: 'var(--color-glass)',
+        backdropFilter: 'blur(var(--glass-blur-xl))',
+        WebkitBackdropFilter: 'blur(var(--glass-blur-xl))',
+      }}
+    >
+      {/* Logo */}
       <div
-        className="flex items-center gap-3 px-4 h-14 shrink-0"
+        className="flex items-center gap-3 px-5 h-16 shrink-0"
         style={{ borderBottom: '1px solid var(--color-border-subtle)' }}
       >
-        <span className="text-2xl">🥥</span>
+        <motion.span
+          className="text-2xl"
+          animate={{ rotate: [0, 5, -5, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          🥥
+        </motion.span>
         <span
-          className="text-sm font-semibold tracking-tight"
+          className="text-sm font-bold tracking-tight"
           style={{ color: 'var(--color-text-primary)' }}
         >
           Coconut
@@ -45,44 +63,69 @@ export function Sidebar({ onCollapse }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1 px-2 pt-3">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className="no-underline"
-            style={{ textDecoration: 'none' }}
-          >
-            {({ isActive }) => (
-              <div
-                className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer"
+      <nav className="flex flex-col gap-0.5 px-3 pt-4">
+        {navItems.map(({ to, icon: Icon, label }) => {
+          const isActive = location.pathname.startsWith(to)
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className="no-underline"
+              style={{ textDecoration: 'none' }}
+            >
+              <motion.div
+                className="relative flex items-center gap-3 px-3 py-2.5 cursor-pointer"
                 style={{
-                  borderRadius: 'var(--radius-sm)',
-                  background: isActive ? 'var(--color-bg-hover)' : 'transparent',
+                  borderRadius: 'var(--radius-md)',
                   color: isActive
                     ? 'var(--color-text-primary)'
                     : 'var(--color-text-secondary)',
-                  transition: 'var(--transition-fast)',
+                  transition: 'color var(--transition-fast)',
                 }}
-                onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'var(--color-bg-hover)'
+                whileHover={{
+                  backgroundColor: 'var(--color-bg-hover)',
                 }}
-                onMouseLeave={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'transparent'
-                }}
+                whileTap={{ scale: 0.98 }}
               >
-                <Icon size={18} />
-                <span className="text-sm">{label}</span>
-              </div>
-            )}
-          </NavLink>
-        ))}
+                {/* Active indicator */}
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-active"
+                    className="absolute inset-0"
+                    style={{
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--color-bg-active)',
+                      border: '1px solid var(--color-glass-border)',
+                    }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <Icon size={18} style={{ position: 'relative', zIndex: 1 }} />
+                <span
+                  className="text-sm font-medium"
+                  style={{ position: 'relative', zIndex: 1 }}
+                >
+                  {label}
+                </span>
+                {/* Active dot */}
+                {isActive && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="ml-auto w-1.5 h-1.5 rounded-full relative z-[1]"
+                    style={{ background: 'var(--color-primary)' }}
+                  />
+                )}
+              </motion.div>
+            </NavLink>
+          )
+        })}
       </nav>
 
       {/* Session list */}
-      <div className="flex-1 overflow-y-auto px-2 pt-4 min-h-0">
+      <div className="flex-1 overflow-y-auto px-3 pt-5 min-h-0">
         <div
-          className="text-xs font-medium uppercase tracking-wider px-3 pb-2"
+          className="text-[10px] font-semibold uppercase tracking-[0.1em] px-3 pb-2"
           style={{ color: 'var(--color-text-muted)' }}
         >
           Sessions
@@ -92,27 +135,26 @@ export function Sidebar({ onCollapse }: SidebarProps) {
 
       {/* Collapse toggle */}
       <div
-        className="px-2 pb-3 pt-2 shrink-0"
+        className="px-3 pb-3 pt-2 shrink-0"
         style={{ borderTop: '1px solid var(--color-border-subtle)' }}
       >
-        <button
+        <motion.button
           onClick={onCollapse}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-md cursor-pointer"
+          whileHover={{ backgroundColor: 'var(--color-bg-hover)' }}
+          whileTap={{ scale: 0.97 }}
+          className="flex items-center gap-3 w-full px-3 py-2.5 cursor-pointer"
           style={{
             background: 'transparent',
             border: 'none',
             color: 'var(--color-text-muted)',
-            borderRadius: 'var(--radius-sm)',
-            transition: 'var(--transition-fast)',
+            borderRadius: 'var(--radius-md)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           title="Collapse sidebar"
         >
           <PanelLeftClose size={18} />
           <span className="text-sm">Collapse</span>
-        </button>
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   )
 }
