@@ -64,4 +64,8 @@
 - [x] Command palette & separator hidden on mobile (declutter)
 - Commit: 399c152
 
+## Phase 6 Final Item ✅ COMPLETE
+- [x] AgentTree animated connection lines — gradient trunk (scaleY in from top), horizontal connector arms (scaleX from left), glowing status-colored junction dots (spring pop), pulsing energy bead that travels down the trunk when any child agent is running, staggered entrance animations for root nodes
+- Commit: 9afdb5b
+
 ## Phase 8: Testing & Ship — QUEUED

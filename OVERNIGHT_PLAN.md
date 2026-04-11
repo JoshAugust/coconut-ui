@@ -47,7 +47,7 @@
 - [x] Cost tracker with animated progress bars
 
 ## Phase 6: Agent & Panel Polish
-- [ ] Agent tree with animated connection lines
+- [x] Agent tree with animated connection lines
 - [x] Status badges with pulse animations
 - [x] Memory browser with glass cards
 - [x] Tool timeline with animated entry

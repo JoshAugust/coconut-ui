@@ -1,4 +1,18 @@
 // Coconut — Eragon Backend Adapter
+//
+// Protocol notes:
+// 1. WebSocket connects to <gatewayUrl>/ws?token=<TOKEN>  (works for both relay and direct)
+// 2. Gateway sends: {type:"event", event:"connect.challenge", payload:{nonce:"..."}}
+// 3. Client responds: {type:"req", id:"c1", method:"connect", params:{...}}
+//    - client.id MUST be "eragon-control-ui"
+//    - client.platform = "web", client.mode = "webchat"
+// 4. API calls: {type:"req", id:"<uid>", method:"<method>", params:{...}}
+// 5. API responses: {type:"res", id:"<uid>", ok:bool, payload:{...}, error:{code,message}}
+// 6. Server events: {type:"event", event:"<name>", payload:{...}}
+//
+// Origin: browsers auto-set Origin to the page URL.
+// Users must add Coconut's URL to gateway.controlUi.allowedOrigins in eragon.json
+// OR set gateway.controlUi.allowInsecureAuth = true for local dev.
 
 import type {
   ConnectionConfig,
@@ -26,6 +40,12 @@ import type {
   ToolCallCallback,
 } from './interface'
 
+interface PendingRequest {
+  resolve: (value: unknown) => void
+  reject: (error: unknown) => void
+  timer: ReturnType<typeof setTimeout>
+}
+
 export class EragonAdapter implements AgentBackendAdapter {
   private ws: WebSocket | null = null
   private config: ConnectionConfig | null = null
@@ -34,48 +54,74 @@ export class EragonAdapter implements AgentBackendAdapter {
   private reconnectAttempts = 0
   private maxReconnectAttempts = 50
   private baseReconnectDelay = 1000
+  private reqIdCounter = 0
+  private pendingRequests: Map<string, PendingRequest> = new Map()
+
+  // Connect handshake
+  private connectResolve: (() => void) | null = null
+  private connectReject: ((e: Error) => void) | null = null
+
+  // Gateway snapshot from connect response
+  private gatewayVersion: string = 'unknown'
+  private uptimeMs: number = 0
+  private availableMethods: string[] = []
+
+  // Main session key discovered from sessions.list
+  private mainSessionKey: string | null = null
 
   private connectionCallbacks: Set<ConnectionCallback> = new Set()
   private messageCallbacks: Set<MessageCallback> = new Set()
   private streamCallbacks: Set<StreamCallback> = new Set()
   private toolCallCallbacks: Set<ToolCallCallback> = new Set()
-  private streamingMessages: Map<string, { content: string; blocks: ContentBlock[] }> = new Map()
+
+  // ---- Connection lifecycle ----
 
   async connect(config: ConnectionConfig): Promise<void> {
     this.config = config
     this.setStatus('connecting')
 
     return new Promise((resolve, reject) => {
-      try {
-        const wsUrl = config.gatewayUrl.replace(/^http/, 'ws')
-        const url = new URL('/ws/chat', wsUrl)
-        url.searchParams.set('token', config.token)
+      this.connectResolve = resolve
+      this.connectReject = reject
 
-        this.ws = new WebSocket(url.toString())
+      try {
+        const wsUrl = this.buildWsUrl(config)
+        this.ws = new WebSocket(wsUrl)
 
         this.ws.onopen = () => {
-          this.reconnectAttempts = 0
-          this.setStatus('connected')
-          resolve()
+          // Don't resolve yet — wait for challenge-response handshake
         }
 
         this.ws.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data)
-            this.handleMessage(data)
-          } catch { /* Non-JSON */ }
+            const data = JSON.parse(event.data as string) as Record<string, unknown>
+            this.handleRawMessage(data)
+          } catch {
+            /* Non-JSON frame, ignore */
+          }
         }
 
         this.ws.onclose = () => {
-          if (this.status !== 'disconnected') {
+          // Clear pending requests
+          for (const [, pending] of this.pendingRequests) {
+            clearTimeout(pending.timer)
+            pending.reject(new Error('WebSocket closed'))
+          }
+          this.pendingRequests.clear()
+
+          if (this.status === 'connecting' && this.connectReject) {
+            this.connectReject(new Error('WebSocket connection closed during handshake'))
+            this.connectResolve = null
+            this.connectReject = null
+          } else if (this.status !== 'disconnected') {
             this.setStatus('reconnecting')
             this.scheduleReconnect()
           }
         }
 
         this.ws.onerror = () => {
-          if (this.status === 'connecting') {
-            reject(new Error('WebSocket connection failed'))
+          if (this.status === 'connecting' && this.connectReject) {
+            this.connectReject(new Error('WebSocket connection failed — check gateway URL and that the gateway is running'))
           }
         }
       } catch (err) {
@@ -103,9 +149,11 @@ export class EragonAdapter implements AgentBackendAdapter {
     return () => this.connectionCallbacks.delete(cb)
   }
 
-  async sendMessage(_sessionId: string, text: string, _attachments?: Attachment[]): Promise<void> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) throw new Error('Not connected')
-    this.ws.send(JSON.stringify({ type: 'chat', text }))
+  // ---- Chat ----
+
+  async sendMessage(sessionId: string, text: string, _attachments?: Attachment[]): Promise<void> {
+    const sessionKey = sessionId || this.mainSessionKey || 'main'
+    await this.sendReq('chat.send', { sessionKey, text })
   }
 
   onMessage(cb: MessageCallback): () => void {
@@ -118,45 +166,66 @@ export class EragonAdapter implements AgentBackendAdapter {
     return () => this.streamCallbacks.delete(cb)
   }
 
+  // ---- Sessions ----
+
   async listSessions(_filter?: SessionFilter): Promise<NormalizedSession[]> {
-    const data = await this.apiCall<{ sessions?: unknown[] }>('GET', '/api/sessions')
-    return (data.sessions || []).map((s) => this.normalizeSession(s))
+    const data = await this.sendReq<{ sessions?: unknown[]; count?: number }>('sessions.list', {})
+    return (data.sessions || []).map((s) => this.normalizeSession(s as Record<string, unknown>))
   }
 
-  async createSession(_opts?: SessionOpts): Promise<NormalizedSession> {
-    const data = await this.apiCall<{ session: unknown }>('POST', '/api/sessions', { action: 'new' })
-    return this.normalizeSession(data.session)
+  async createSession(opts?: SessionOpts): Promise<NormalizedSession> {
+    // Eragon doesn't have a sessions.create — sessions are created on first message
+    // Return a placeholder session based on config
+    const agentId = this.config?.agentName || 'main'
+    const key = `agent:${agentId}:main`
+    return {
+      id: key,
+      agentId,
+      label: opts?.label || `New session`,
+      model: 'claude-opus-4-6',
+      status: 'idle',
+      createdAt: new Date().toISOString(),
+      messageCount: 0,
+      tokenUsage: { input: 0, output: 0 },
+    }
   }
 
   async resetSession(sessionId: string): Promise<void> {
-    await this.apiCall('POST', `/api/sessions/${sessionId}/reset`)
+    await this.sendReq('sessions.reset', { sessionKey: sessionId })
   }
 
   async getHistory(sessionId: string, opts?: HistoryOpts): Promise<NormalizedMessage[]> {
-    const params = new URLSearchParams()
-    if (opts?.limit) params.set('limit', String(opts.limit))
-    if (opts?.includeTools) params.set('includeTools', 'true')
-    const data = await this.apiCall<{ messages?: unknown[] }>('GET', `/api/sessions/${sessionId}/history?${params}`)
-    return (data.messages || []).map((m) => this.normalizeMessage(m as Record<string, unknown>, sessionId))
+    const params: Record<string, unknown> = {
+      sessionKey: sessionId,
+      limit: opts?.limit ?? 50,
+    }
+    if (opts?.includeTools !== false) params.includeTools = true
+    const data = await this.sendReq<{ messages?: unknown[] }>('chat.history', params)
+    return (data.messages || []).map((m, i) =>
+      this.normalizeMessage(m as Record<string, unknown>, sessionId, i)
+    )
   }
+
+  // ---- Agents ----
 
   async listAgents(): Promise<NormalizedAgent[]> {
-    const data = await this.apiCall<{ agents?: unknown[] }>('GET', '/api/agents')
-    return (data.agents || []).map((a) => this.normalizeAgent(a))
+    const data = await this.sendReq<{ agents?: unknown[] }>('agents.list', {})
+    return (data.agents || []).map((a) => this.normalizeAgent(a as Record<string, unknown>))
   }
 
-  async spawnAgent(opts: SpawnOpts): Promise<NormalizedAgent> {
-    const data = await this.apiCall<{ agent: unknown }>('POST', '/api/agents/spawn', opts)
-    return this.normalizeAgent(data.agent)
+  async spawnAgent(_opts: SpawnOpts): Promise<NormalizedAgent> {
+    throw new Error('spawnAgent not supported via Eragon gateway WebSocket protocol')
   }
 
-  async killAgent(agentId: string): Promise<void> {
-    await this.apiCall('POST', `/api/agents/${agentId}/kill`)
+  async killAgent(_agentId: string): Promise<void> {
+    throw new Error('killAgent not supported via Eragon gateway WebSocket protocol')
   }
 
-  async steerAgent(agentId: string, message: string): Promise<void> {
-    await this.apiCall('POST', `/api/agents/${agentId}/steer`, { message })
+  async steerAgent(_agentId: string, _message: string): Promise<void> {
+    throw new Error('steerAgent not supported via Eragon gateway WebSocket protocol')
   }
+
+  // ---- Tool calls ----
 
   onToolCall(cb: ToolCallCallback): () => void {
     this.toolCallCallbacks.add(cb)
@@ -164,63 +233,258 @@ export class EragonAdapter implements AgentBackendAdapter {
   }
 
   async approveToolCall(callId: string): Promise<void> {
-    this.ws?.send(JSON.stringify({ type: 'approve', callId }))
+    await this.sendReq('exec.approval.resolve', { callId, decision: 'allow-once' })
   }
 
   async denyToolCall(callId: string): Promise<void> {
-    this.ws?.send(JSON.stringify({ type: 'deny', callId }))
+    await this.sendReq('exec.approval.resolve', { callId, decision: 'deny' })
   }
 
+  // ---- System ----
+
   async getStatus(): Promise<SystemStatus> {
-    const data = await this.apiCall<Record<string, unknown>>('GET', '/api/status')
-    return {
-      version: (data.version as string) || 'unknown',
-      uptime_ms: (data.uptime_ms as number) || 0,
-      activeAgents: (data.activeAgents as number) || 0,
-      activeSessions: (data.activeSessions as number) || 0,
-      connectedChannels: (data.connectedChannels as string[]) || [],
-      costToday: (data.costToday as number) || 0,
-      costThisMonth: (data.costThisMonth as number) || 0,
-      contextPressure: (data.contextPressure as SystemStatus['contextPressure']) || 'low',
-      memoryUsageMb: (data.memoryUsageMb as number) || 0,
+    try {
+      const data = await this.sendReq<Record<string, unknown>>('status', {})
+      const sessions = (data.sessions as Record<string, unknown>) || {}
+      return {
+        version: this.gatewayVersion,
+        uptime_ms: this.uptimeMs,
+        activeAgents: 0,
+        activeSessions: (sessions.count as number) || 0,
+        connectedChannels: this.extractChannelNames(data),
+        costToday: 0,
+        costThisMonth: 0,
+        contextPressure: 'low',
+        memoryUsageMb: 0,
+      }
+    } catch {
+      return {
+        version: this.gatewayVersion || 'unknown',
+        uptime_ms: this.uptimeMs || 0,
+        activeAgents: 0,
+        activeSessions: 0,
+        connectedChannels: [],
+        costToday: 0,
+        costThisMonth: 0,
+        contextPressure: 'low',
+        memoryUsageMb: 0,
+      }
     }
   }
 
   async getCostMetrics(_range: TimeRange): Promise<CostMetrics> {
-    const data = await this.apiCall<Record<string, unknown>>('GET', '/api/cost')
-    return data as unknown as CostMetrics
+    try {
+      const data = await this.sendReq<Record<string, unknown>>('usage.cost', {})
+      return data as unknown as CostMetrics
+    } catch {
+      return {} as CostMetrics
+    }
   }
 
   async getContextPressure(_sessionId: string): Promise<ContextPressure> {
-    const data = await this.apiCall<Record<string, unknown>>('GET', '/api/context-pressure')
     return {
-      used: (data.used as number) || 0,
-      total: (data.total as number) || 200000,
-      percentage: (data.percentage as number) || 0,
-      level: (data.level as ContextPressure['level']) || 'low',
+      used: 0,
+      total: 200000,
+      percentage: 0,
+      level: 'low',
     }
   }
 
   capabilities(): BackendCapabilities {
     return {
       streaming: true,
-      subAgents: true,
-      toolApprovals: true,
+      subAgents: false,
+      toolApprovals: this.availableMethods.includes('exec.approval.resolve'),
       workflows: false,
-      cron: true,
-      memory: true,
-      skills: true,
-      channels: true,
-      costTracking: true,
+      cron: this.availableMethods.includes('cron.list'),
+      memory: false,
+      skills: this.availableMethods.includes('skills.status'),
+      channels: this.availableMethods.includes('channels.status'),
+      costTracking: this.availableMethods.includes('usage.cost'),
       hands: false,
       branching: false,
-      voice: true,
+      voice: this.availableMethods.includes('tts.convert'),
       a2a: false,
-      mcp: true,
+      mcp: false,
     }
   }
 
-  // --- Private ---
+  // ---- Private: URL construction ----
+
+  private buildWsUrl(config: ConnectionConfig): string {
+    // Normalize to ws/wss
+    let base = config.gatewayUrl
+      .replace(/^https:\/\//, 'wss://')
+      .replace(/^http:\/\//, 'ws://')
+
+    // Strip trailing slash
+    base = base.replace(/\/$/, '')
+
+    // Append /ws path if not already present
+    if (!base.endsWith('/ws')) {
+      base = `${base}/ws`
+    }
+
+    // Add token as query param (required by relay for routing; also works on direct gateway)
+    const sep = base.includes('?') ? '&' : '?'
+    return `${base}${sep}token=${encodeURIComponent(config.token)}`
+  }
+
+  // ---- Private: WebSocket message handler ----
+
+  private handleRawMessage(data: Record<string, unknown>) {
+    const type = data.type as string
+
+    // Server-initiated events
+    if (type === 'event') {
+      const event = data.event as string
+      const payload = (data.payload || {}) as Record<string, unknown>
+
+      switch (event) {
+        case 'connect.challenge':
+          this.handleChallenge()
+          break
+
+        case 'health':
+        case 'tick':
+          // Heartbeat — ignore
+          break
+
+        case 'message':
+        case 'chat.message': {
+          // Full message arrived
+          const sessionKey = (payload.sessionKey as string) || this.mainSessionKey || 'main'
+          const msg = this.normalizeMessage(payload, sessionKey, Date.now())
+          this.messageCallbacks.forEach((cb) => cb(msg))
+          break
+        }
+
+        case 'chat.token':
+        case 'token':
+        case 'stream.token': {
+          // Streaming token
+          const sessionKey = (payload.sessionKey as string) || this.mainSessionKey || 'main'
+          const messageId = (payload.messageId as string) || (payload.id as string) || 'streaming'
+          const token = (payload.token as string) || (payload.text as string) || ''
+          const done = !!(payload.done || payload.end)
+          this.streamCallbacks.forEach((cb) => cb({ sessionId: sessionKey, messageId, token, done }))
+          break
+        }
+
+        case 'exec.approval.requested': {
+          // Tool call approval needed
+          const sessionKey = (payload.sessionKey as string) || this.mainSessionKey || 'main'
+          const toolMsg = this.normalizeToolApprovalRequest(payload, sessionKey)
+          this.toolCallCallbacks.forEach((cb) => cb(toolMsg))
+          break
+        }
+
+        default:
+          // Unhandled event — could log in dev
+          break
+      }
+      return
+    }
+
+    // Request/response
+    if (type === 'res') {
+      const id = data.id as string
+      const pending = this.pendingRequests.get(id)
+      if (pending) {
+        clearTimeout(pending.timer)
+        this.pendingRequests.delete(id)
+        if (data.ok) {
+          pending.resolve(data.payload || {})
+        } else {
+          const err = (data.error as Record<string, unknown>) || {}
+          pending.reject(new Error((err.message as string) || `Request failed: ${id}`))
+        }
+      }
+
+      // Special: handle connect response
+      if (id === 'coconut-connect') {
+        if (data.ok) {
+          const payload = (data.payload || {}) as Record<string, unknown>
+          const server = (payload.server || {}) as Record<string, unknown>
+          const features = (payload.features || {}) as Record<string, unknown>
+          const snapshot = (payload.snapshot || {}) as Record<string, unknown>
+
+          this.gatewayVersion = (server.version as string) || 'unknown'
+          this.uptimeMs = (snapshot.uptimeMs as number) || 0
+          this.availableMethods = (features.methods as string[]) || []
+
+          this.reconnectAttempts = 0
+          this.setStatus('connected')
+
+          if (this.connectResolve) {
+            this.connectResolve()
+            this.connectResolve = null
+            this.connectReject = null
+          }
+        } else {
+          const err = (data.error as Record<string, unknown>) || {}
+          const msg = (err.message as string) || 'Connection rejected by gateway'
+          this.setStatus('error')
+          if (this.connectReject) {
+            this.connectReject(new Error(msg))
+            this.connectResolve = null
+            this.connectReject = null
+          }
+        }
+      }
+    }
+  }
+
+  private handleChallenge() {
+    if (!this.config || !this.ws) return
+    const req = {
+      type: 'req',
+      id: 'coconut-connect',
+      method: 'connect',
+      params: {
+        minProtocol: 3,
+        maxProtocol: 3,
+        auth: { token: this.config.token },
+        role: 'operator',
+        scopes: ['operator.admin'],
+        caps: ['tool-events'],
+        client: {
+          id: 'eragon-control-ui',
+          version: 'coconut-1.0.0',
+          platform: 'web',
+          mode: 'webchat',
+          instanceId: `coconut-${Date.now()}`,
+        },
+      },
+    }
+    this.ws.send(JSON.stringify(req))
+  }
+
+  // ---- Private: Request/response ----
+
+  private sendReq<T = Record<string, unknown>>(method: string, params: unknown): Promise<T> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return Promise.reject(new Error('Not connected'))
+    }
+
+    const id = `req-${++this.reqIdCounter}`
+    return new Promise<T>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id)
+        reject(new Error(`Request timeout: ${method}`))
+      }, 15000)
+
+      this.pendingRequests.set(id, {
+        resolve: resolve as (v: unknown) => void,
+        reject,
+        timer,
+      })
+
+      this.ws!.send(JSON.stringify({ type: 'req', id, method, params }))
+    })
+  }
+
+  // ---- Private: Status / reconnect ----
 
   private setStatus(status: ConnectionStatus) {
     this.status = status
@@ -239,96 +503,164 @@ export class EragonAdapter implements AgentBackendAdapter {
     }, delay)
   }
 
-  private handleMessage(data: Record<string, unknown>) {
-    const type = data.type as string
-    switch (type) {
-      case 'stream_start': {
-        const msgId = (data.messageId as string) || crypto.randomUUID()
-        this.streamingMessages.set(msgId, { content: '', blocks: [] })
-        break
-      }
-      case 'stream_token': {
-        const msgId = (data.messageId as string) || ''
-        const token = (data.token as string) || ''
-        const existing = this.streamingMessages.get(msgId)
-        if (existing) existing.content += token
-        this.streamCallbacks.forEach((cb) => cb({ sessionId: (data.sessionId as string) || 'main', messageId: msgId, token, done: false }))
-        break
-      }
-      case 'stream_end':
-      case 'message': {
-        const msg = this.normalizeMessage(data, (data.sessionId as string) || 'main')
-        if (msg.id) this.streamingMessages.delete(msg.id)
-        this.messageCallbacks.forEach((cb) => cb(msg))
-        break
-      }
-      case 'tool_call': {
-        const toolMsg = this.normalizeMessage(data, (data.sessionId as string) || 'main')
-        this.toolCallCallbacks.forEach((cb) => cb(toolMsg))
-        break
-      }
+  // ---- Private: Channel helper ----
+
+  private extractChannelNames(data: Record<string, unknown>): string[] {
+    const summary = data.channelSummary as string[] | undefined
+    if (Array.isArray(summary)) {
+      return summary
+        .filter((s) => !s.startsWith(' '))
+        .map((s) => s.split(':')[0].trim())
+        .filter(Boolean)
+    }
+    return []
+  }
+
+  // ---- Private: Normalization ----
+
+  private normalizeSession(data: Record<string, unknown>): NormalizedSession {
+    const key = (data.key as string) || (data.sessionId as string) || ''
+    const updatedAt = data.updatedAt as number | undefined
+    return {
+      id: key,
+      agentId: data.agentId as string | undefined,
+      label: (data.displayName as string) || (data.label as string) || key,
+      model: (data.model as string) || 'unknown',
+      status: 'idle',
+      createdAt: updatedAt ? new Date(updatedAt).toISOString() : new Date().toISOString(),
+      lastMessageAt: updatedAt ? new Date(updatedAt).toISOString() : undefined,
+      lastMessagePreview: data.lastMessagePreview as string | undefined,
+      messageCount: (data.messageCount as number) || 0,
+      tokenUsage: (data.tokenUsage as NormalizedSession['tokenUsage']) || { input: 0, output: 0 },
+      channel: data.kind as string | undefined,
+      metadata: { sessionId: data.sessionId, kind: data.kind, chatType: data.chatType },
     }
   }
 
-  private normalizeMessage(data: Record<string, unknown>, sessionId: string): NormalizedMessage {
+  private normalizeMessage(
+    data: Record<string, unknown>,
+    sessionId: string,
+    index: number | string
+  ): NormalizedMessage {
+    const role = (data.role as NormalizedMessage['role']) || 'assistant'
+    const timestamp = data.timestamp as number | string | undefined
+
+    // Eragon content is an array of typed blocks
+    const rawContent = data.content
+    let contentText = ''
+    let blocks: ContentBlock[] | undefined
+
+    if (Array.isArray(rawContent)) {
+      blocks = rawContent.map((block) => this.normalizeContentBlock(block as Record<string, unknown>))
+      // Extract text for the content string
+      contentText = rawContent
+        .filter((b: unknown) => (b as Record<string, unknown>).type === 'text')
+        .map((b: unknown) => (b as Record<string, unknown>).text as string)
+        .join('\n')
+    } else if (typeof rawContent === 'string') {
+      contentText = rawContent
+    }
+
+    const id =
+      (data.id as string) ||
+      (data.messageId as string) ||
+      `${sessionId}-${typeof index === 'number' ? index : Date.now()}`
+
     return {
-      id: (data.id as string) || (data.messageId as string) || crypto.randomUUID(),
+      id,
       sessionId,
-      role: (data.role as NormalizedMessage['role']) || 'assistant',
-      content: (data.content as string) || (data.text as string) || '',
-      blocks: data.blocks as ContentBlock[] | undefined,
-      timestamp: (data.timestamp as string) || new Date().toISOString(),
+      role,
+      content: contentText,
+      blocks: blocks?.length ? blocks : undefined,
+      timestamp:
+        typeof timestamp === 'number'
+          ? new Date(timestamp).toISOString()
+          : (timestamp as string) || new Date().toISOString(),
       model: data.model as string | undefined,
       tokenUsage: data.tokenUsage as NormalizedMessage['tokenUsage'],
-      replyTo: data.replyTo as string | undefined,
-      attachments: data.attachments as NormalizedMessage['attachments'],
-      metadata: data.metadata as Record<string, unknown> | undefined,
-      streaming: data.type === 'stream_token',
+      metadata: {
+        api: data.api,
+        provider: data.provider,
+        stopReason: data.stopReason,
+      },
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private normalizeSession(data: any): NormalizedSession {
+  private normalizeContentBlock(block: Record<string, unknown>): ContentBlock {
+    const type = block.type as string
+    switch (type) {
+      case 'text':
+        return { type: 'text', text: (block.text as string) || '' }
+
+      case 'thinking':
+        return { type: 'thinking', text: (block.thinking as string) || (block.text as string) || '' }
+
+      case 'toolCall':
+      case 'tool_call':
+      case 'tool_use':
+        return {
+          type: 'tool_call',
+          id: (block.id as string) || '',
+          name: (block.name as string) || '',
+          args: (block.arguments as Record<string, unknown>) || (block.input as Record<string, unknown>) || {},
+          result: block.result as string | undefined,
+          error: block.error as string | undefined,
+          duration_ms: block.duration_ms as number | undefined,
+          status: (block.status as Extract<ContentBlock, { type: 'tool_call' }>['status']) || 'success',
+        }
+
+      case 'toolResult':
+      case 'tool_result':
+        return {
+          type: 'tool_call',
+          id: (block.toolUseId as string) || (block.id as string) || '',
+          name: '',
+          args: {},
+          result: Array.isArray(block.content)
+            ? (block.content as Array<{ text?: string }>).map((c) => c.text || '').join('\n')
+            : (block.content as string) || '',
+          status: 'success',
+        }
+
+      default:
+        return { type: 'text', text: JSON.stringify(block) }
+    }
+  }
+
+  private normalizeAgent(data: Record<string, unknown>): NormalizedAgent {
     return {
-      id: data?.id || data?.sessionId || '',
-      agentId: data?.agentId,
-      label: data?.label,
-      model: data?.model || 'unknown',
-      status: data?.status || 'idle',
-      createdAt: data?.createdAt || new Date().toISOString(),
-      lastMessageAt: data?.lastMessageAt,
-      lastMessagePreview: data?.lastMessagePreview,
-      messageCount: data?.messageCount || 0,
-      tokenUsage: data?.tokenUsage || { input: 0, output: 0 },
-      channel: data?.channel,
-      metadata: data?.metadata,
+      id: (data.id as string) || '',
+      status: 'idle',
+      task: data.name as string | undefined,
+      model: 'unknown',
+      startedAt: new Date().toISOString(),
+      elapsed_ms: 0,
+      tokenUsage: { input: 0, output: 0 },
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private normalizeAgent(data: any): NormalizedAgent {
+  private normalizeToolApprovalRequest(
+    payload: Record<string, unknown>,
+    sessionId: string
+  ): NormalizedMessage {
+    const callId = (payload.callId as string) || (payload.id as string) || crypto.randomUUID()
+    const command = (payload.command as string) || (payload.text as string) || ''
     return {
-      id: data?.id || '',
-      parentId: data?.parentId,
-      status: data?.status || 'running',
-      task: data?.task,
-      model: data?.model || 'unknown',
-      startedAt: data?.startedAt || new Date().toISOString(),
-      elapsed_ms: data?.elapsed_ms || 0,
-      tokenUsage: data?.tokenUsage || { input: 0, output: 0 },
-      sessionId: data?.sessionId,
+      id: callId,
+      sessionId,
+      role: 'tool',
+      content: command,
+      blocks: [
+        {
+          type: 'tool_call',
+          id: callId,
+          name: (payload.tool as string) || 'exec',
+          args: (payload.args as Record<string, unknown>) || { command },
+          status: 'approval_required',
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      metadata: { approvalRequired: true, callId },
     }
-  }
-
-  private async apiCall<T = Record<string, unknown>>(method: string, path: string, body?: unknown): Promise<T> {
-    if (!this.config) throw new Error('Not configured')
-    const baseUrl = this.config.gatewayUrl.replace(/^ws/, 'http')
-    const res = await fetch(`${baseUrl}${path}`, {
-      method,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.config.token}` },
-      body: body ? JSON.stringify(body) : undefined,
-    })
-    if (!res.ok) throw new Error(`API error: ${res.status} ${res.statusText}`)
-    return res.json()
   }
 }
