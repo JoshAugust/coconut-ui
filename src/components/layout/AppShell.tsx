@@ -237,7 +237,7 @@ export function AppShell() {
             </div>
 
             {/* Right panel content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 scroll-fade">
               <RightPanelContent panel={rightPanel} />
             </div>
           </motion.aside>
@@ -320,17 +320,21 @@ function DesktopHeader({
     <header
       className="flex items-center justify-between shrink-0 px-4"
       style={{
-        height: '56px',
-        borderBottom: '1px solid var(--color-border-subtle)',
-        background: 'var(--color-glass)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        height: '48px',
+        borderBottom: '1px solid var(--color-border)',
+        background: 'var(--color-bg-secondary)',
       }}
     >
       {/* Left: status */}
       <div className="flex items-center gap-2">
-        <div className="pulse-dot" style={{ background: statusColor }} />
-        <span className="text-xs font-medium" style={{ color: 'var(--color-text-muted)' }}>
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{
+            background: statusColor,
+            boxShadow: status === 'connected' ? '0 0 6px rgba(52, 211, 153, 0.4)' : 'none',
+          }}
+        />
+        <span className="text-[12px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
           {statusLabel}
         </span>
       </div>

@@ -39,11 +39,17 @@ const toolIcons: Record<string, typeof Terminal> = {
 }
 
 const statusConfig = {
-  success: { icon: CheckCircle2, color: '#22c55e', borderColor: '#22c55e', bg: 'rgba(34, 197, 94, 0.1)', label: 'Success' },
-  error: { icon: XCircle, color: '#ef4444', borderColor: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Error' },
-  running: { icon: Loader2, color: '#3b82f6', borderColor: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)', label: 'Running' },
-  approval_required: { icon: ShieldAlert, color: 'var(--color-info)', borderColor: 'var(--color-info)', bg: 'var(--color-info-muted)', label: 'Approval Required' },
-  pending: { icon: Clock, color: 'var(--color-text-muted)', borderColor: 'var(--color-text-muted)', bg: 'var(--color-bg-tertiary)', label: 'Pending' },
+  success: { icon: CheckCircle2, color: 'var(--color-success)', label: 'Done' },
+  error: { icon: XCircle, color: 'var(--color-error)', label: 'Error' },
+  running: { icon: Loader2, color: 'var(--color-info)', label: 'Running' },
+  approval_required: { icon: ShieldAlert, color: 'var(--color-warning)', label: 'Approval' },
+  pending: { icon: Clock, color: 'var(--color-text-muted)', label: 'Pending' },
+}
+
+/** Format duration: 1234 → "1.2s", 450 → "450ms" */
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`
+  return `${(ms / 1000).toFixed(1)}s`
 }
 
 export function ToolCallCard({ block }: { block: ToolBlock }) {
@@ -52,86 +58,88 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
   const StatusIcon = config.icon
   const ToolIcon = toolIcons[block.name] || Terminal
 
-  const argsPreview = block.args
-    ? Object.entries(block.args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ').slice(0, 60)
-    : ''
+  // Status-colored left border
+  const borderColor = block.status === 'success' ? 'var(--color-success)'
+    : block.status === 'error' ? 'var(--color-error)'
+    : block.status === 'running' ? 'var(--color-info)'
+    : block.status === 'approval_required' ? 'var(--color-warning)'
+    : 'var(--color-border)'
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden w-full"
+      className="overflow-hidden hover-lift"
       style={{
-        borderRadius: '14px',
+        borderRadius: 'var(--radius-lg)',
         background: 'var(--color-bg-elevated)',
-        borderLeft: `3px solid ${config.borderColor}`,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+        border: '1px solid var(--color-border)',
+        borderLeft: `3px solid ${borderColor}`,
       }}
     >
-      {/* Header — single row: icon + name + duration + status pill + chevron */}
+      {/* Header — single row, compact */}
       <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer"
+        className="flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
-        style={{ transition: 'background var(--transition-fast)' }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-bg-hover)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
       >
-        {/* Tool icon */}
-        <div
-          className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
-          style={{ background: config.bg }}
+        {/* Tool icon — 16px, matches text */}
+        <ToolIcon size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+
+        {/* Name */}
+        <span
+          className="text-[13px] font-medium font-mono"
+          style={{ color: 'var(--color-text-primary)' }}
         >
-          <ToolIcon size={14} style={{ color: config.color }} />
-        </div>
+          {block.name}
+        </span>
 
-        {/* Name + collapsed args preview */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-xs font-semibold"
-              style={{ color: 'var(--color-text-primary)', fontFamily: 'var(--font-mono)' }}
-            >
-              {block.name}
-            </span>
-            {block.duration_ms != null && (
-              <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
-                <Clock size={10} />
-                {block.duration_ms < 1000
-                  ? `${block.duration_ms}ms`
-                  : `${(block.duration_ms / 1000).toFixed(1)}s`}
-              </span>
-            )}
-          </div>
-          {argsPreview && !expanded && (
-            <p
-              className="text-[10px] truncate mt-0.5"
-              style={{ color: 'var(--color-text-muted)' }}
-            >
-              {argsPreview}{argsPreview.length >= 60 ? '…' : ''}
-            </p>
-          )}
-        </div>
+        {/* Duration */}
+        {block.duration_ms != null && (
+          <span className="text-[11px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
+            {formatDuration(block.duration_ms)}
+          </span>
+        )}
 
-        {/* Status badge */}
-        <div
-          className="flex items-center gap-1.5 px-2 py-1 rounded-full shrink-0"
-          style={{ background: config.bg }}
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Status pill badge */}
+        <span
+          className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium"
+          style={{
+            borderRadius: 'var(--radius-full)',
+            color: config.color,
+            background: block.status === 'success' ? 'var(--color-success-muted)'
+              : block.status === 'error' ? 'var(--color-error-muted)'
+              : block.status === 'running' ? 'var(--color-info-muted)'
+              : block.status === 'approval_required' ? 'var(--color-warning-muted)'
+              : 'var(--color-bg-tertiary)',
+          }}
         >
           <StatusIcon
-            size={12}
-            style={{ color: config.color }}
-            className={block.status === 'running' ? 'animate-spin' : ''}
+            size={11}
+            className={block.status === 'running' ? 'status-running' : ''}
           />
-          <span className="text-[10px] font-medium" style={{ color: config.color }}>
-            {config.label}
-          </span>
-        </div>
+          {config.label}
+        </span>
 
         {/* Expand chevron */}
-        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.15 }}>
           <ChevronDown size={14} style={{ color: 'var(--color-text-muted)' }} />
         </motion.div>
       </div>
+
+      {/* Collapsed args preview */}
+      {!expanded && block.args && (
+        <div className="px-3.5 pb-2.5 -mt-1">
+          <p
+            className="text-[11px] truncate font-mono"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {Object.entries(block.args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ').slice(0, 60)}
+          </p>
+        </div>
+      )}
 
       {/* Expanded content */}
       <AnimatePresence>
@@ -140,27 +148,28 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
             <div
-              className="px-4 pb-4 space-y-2"
+              className="px-3.5 pb-3.5 space-y-2.5"
               style={{ borderTop: '1px solid var(--color-border-subtle)' }}
             >
-              {/* Args */}
               {block.args && (
-                <div className="pt-2">
+                <div className="pt-2.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                     Arguments
                   </span>
                   <pre
-                    className="text-xs mt-1 p-2 rounded-md overflow-x-auto"
+                    className="mt-1.5 p-3 overflow-x-auto"
                     style={{
-                      background: 'var(--color-code-bg)',
-                      border: '1px solid var(--color-code-border)',
+                      background: 'var(--color-bg-primary)',
+                      border: '1px solid var(--color-border-subtle)',
+                      borderRadius: 'var(--radius-md)',
                       color: 'var(--color-text-secondary)',
                       fontFamily: 'var(--font-mono)',
                       fontSize: '11px',
+                      lineHeight: '1.6',
                     }}
                   >
                     {JSON.stringify(block.args, null, 2)}
@@ -168,20 +177,21 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
                 </div>
               )}
 
-              {/* Result */}
               {block.result && (
                 <div>
                   <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                     Result
                   </span>
                   <pre
-                    className="text-xs mt-1 p-2 rounded-md overflow-x-auto max-h-48"
+                    className="mt-1.5 p-3 overflow-x-auto max-h-48"
                     style={{
-                      background: 'var(--color-code-bg)',
-                      border: '1px solid var(--color-code-border)',
+                      background: 'var(--color-bg-primary)',
+                      border: '1px solid var(--color-border-subtle)',
+                      borderRadius: 'var(--radius-md)',
                       color: 'var(--color-text-secondary)',
                       fontFamily: 'var(--font-mono)',
                       fontSize: '11px',
+                      lineHeight: '1.6',
                     }}
                   >
                     {block.result}
@@ -189,17 +199,16 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
                 </div>
               )}
 
-              {/* Approval buttons */}
               {block.status === 'approval_required' && (
                 <div className="flex gap-2 pt-1">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium text-white cursor-pointer"
+                    className="flex-1 py-2 text-sm font-medium text-white cursor-pointer"
                     style={{
                       background: 'var(--color-success)',
                       border: 'none',
-                      boxShadow: '0 0 12px rgba(34, 197, 94, 0.3)',
+                      borderRadius: 'var(--radius-md)',
                     }}
                   >
                     Approve
@@ -207,11 +216,12 @@ export function ToolCallCard({ block }: { block: ToolBlock }) {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer"
+                    className="flex-1 py-2 text-sm font-medium cursor-pointer"
                     style={{
-                      background: 'var(--color-error-muted)',
+                      background: 'transparent',
                       color: 'var(--color-error)',
                       border: '1px solid var(--color-error)',
+                      borderRadius: 'var(--radius-md)',
                     }}
                   >
                     Deny

@@ -43,21 +43,22 @@ export function ChatInput({ onSend, disabled = false, placeholder = 'Type a mess
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="px-4 pb-4 pt-2"
+      className="px-6 pb-5 pt-3"
+      style={{ background: 'linear-gradient(0deg, var(--color-bg-primary) 60%, transparent 100%)' }}
     >
       <div
-        className="flex items-end gap-2 px-3 py-2"
+        className="flex items-end gap-2 px-4 py-3"
         style={{
-          borderRadius: '16px',
+          borderRadius: 'var(--radius-lg)',
           background: 'var(--color-bg-elevated)',
           border: focused
             ? '1px solid var(--color-primary)'
             : '1px solid var(--color-border)',
           boxShadow: focused
-            ? '0 0 0 3px var(--color-primary-muted)'
-            : 'none',
+            ? '0 0 0 3px var(--color-primary-muted), inset 0 1px 2px rgba(0,0,0,0.1)'
+            : '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 2px rgba(0,0,0,0.05)',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-          minHeight: '44px',
+          minHeight: '48px',
         }}
       >
         {/* Attach button */}

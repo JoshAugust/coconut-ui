@@ -101,14 +101,21 @@ export function AgentCard({ agent, depth = 0 }: AgentCardProps) {
           <div className="flex items-center justify-between gap-2">
             <AgentStatusBadge status={agent.status} />
             <span
-              className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+              className="text-[10px] px-2 py-0.5 font-medium"
               style={{
                 background: 'var(--color-bg-tertiary)',
                 color: 'var(--color-text-muted)',
                 border: '1px solid var(--color-border-subtle)',
+                borderRadius: 'var(--radius-full)',
               }}
             >
-              {agent.model.split('/').pop()}
+              {(() => {
+                const name = agent.model.split('/').pop() || agent.model
+                if (name.includes('opus')) return 'Opus 4'
+                if (name.includes('sonnet')) return 'Sonnet 4'
+                if (name.includes('haiku')) return 'Haiku 4'
+                return name
+              })()}
             </span>
           </div>
 

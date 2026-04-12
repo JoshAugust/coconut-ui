@@ -11,14 +11,14 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 
-  /* === Radius === */
+  /* === Radius — 3-tier system: card/input/pill === */
   --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
+  --radius-sm: 6px;
+  --radius-md: 10px;      /* inputs, small cards */
+  --radius-lg: 12px;      /* cards, panels */
+  --radius-xl: 12px;      /* same as lg — consistency */
+  --radius-2xl: 16px;     /* modals, large containers */
+  --radius-full: 9999px;  /* pills, badges, avatars */
 
   /* === Shadows === */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -52,28 +52,32 @@
    DARK THEME (default)
    ======================================== */
 [data-theme='dark'] {
-  /* === Background surfaces — navy-tinted darks, not pure black === */
-  --color-bg-primary: #0c0d14;
-  --color-bg-secondary: #14151f;
-  --color-bg-tertiary: #1a1b2e;
-  --color-bg-elevated: #1e1f33;
+  /* === Background surfaces — Warp-style overlay system
+       Base: #0a0a0f, then white overlays at increasing opacity
+       This guarantees consistent visual hierarchy === */
+  --color-bg-base: #0a0a0f;
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #111118;       /* base + 3% white */
+  --color-bg-tertiary: #18181f;        /* base + 6% white */
+  --color-bg-elevated: #1f1f28;        /* base + 9% white */
+  --color-bg-surface: #262630;         /* base + 12% white — modals/popovers */
   --color-bg-hover: rgba(255, 255, 255, 0.05);
-  --color-bg-active: rgba(255, 255, 255, 0.09);
+  --color-bg-active: rgba(255, 255, 255, 0.08);
 
-  /* === Glass surfaces — warmer, more visible === */
-  --color-glass: rgba(20, 21, 35, 0.75);
-  --color-glass-hover: rgba(26, 27, 46, 0.85);
-  --color-glass-active: rgba(30, 31, 51, 0.9);
-  --color-glass-border: rgba(255, 255, 255, 0.08);
-  --color-glass-border-hover: rgba(255, 255, 255, 0.13);
+  /* === Glass — kept minimal, prefer solid surfaces === */
+  --color-glass: rgba(17, 17, 24, 0.85);
+  --color-glass-hover: rgba(24, 24, 31, 0.9);
+  --color-glass-active: rgba(31, 31, 40, 0.95);
+  --color-glass-border: rgba(255, 255, 255, 0.07);
+  --color-glass-border-hover: rgba(255, 255, 255, 0.12);
 
-  /* === Text — brighter primary, warmer secondary === */
-  --color-text-primary: #f4f4f8;
-  --color-text-secondary: #b0b0c8;
-  --color-text-muted: #6c6c88;
-  --color-text-inverse: #0c0d14;
+  /* === Text — off-white primary (not pure white), warm secondary === */
+  --color-text-primary: #ececf0;
+  --color-text-secondary: #a0a0b4;
+  --color-text-muted: #5c5c72;
+  --color-text-inverse: #0a0a0f;
 
-  /* === Borders — slightly more visible === */
+  /* === Borders — visible but not distracting === */
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-subtle: rgba(255, 255, 255, 0.05);
   --color-border-focus: rgba(16, 185, 129, 0.5);
@@ -190,6 +194,41 @@ body,
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
+}
+
+/* ========================================
+   NOISE TEXTURE — subtle grain for tactile feel
+   ======================================== */
+[data-theme='dark'] #root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ========================================
+   SCROLL FADE EDGES — content fades at boundaries
+   ======================================== */
+.scroll-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 24px,
+    black calc(100% - 24px),
+    transparent 100%
+  );
 }
 
 /* ========================================
@@ -481,6 +520,89 @@ textarea:focus {
 ::selection {
   background: var(--color-primary-muted);
   color: var(--color-text-primary);
+}
+
+/* ========================================
+   STATUS ANIMATIONS
+   ======================================== */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.status-running {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-glow-red {
+  0%, 100% { box-shadow: 0 0 4px rgba(248, 113, 113, 0.3); }
+  50% { box-shadow: 0 0 8px rgba(248, 113, 113, 0.6); }
+}
+
+.status-failed {
+  animation: status-glow-red 2s ease-in-out infinite;
+}
+
+/* Session dot pulse */
+.session-dot-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   SKELETON LOADING
+   ======================================== */
+.skeleton {
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  animation: shimmer-slide 1.5s ease-in-out infinite;
+}
+
+.skeleton-text {
+  height: 12px;
+  width: 80%;
+}
+
+.skeleton-text-sm {
+  height: 10px;
+  width: 60%;
+}
+
+.skeleton-circle {
+  border-radius: var(--radius-full);
+}
+
+/* ========================================
+   HOVER UTILITIES
+   ======================================== */
+.hover-lift {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hover-bg {
+  transition: background 0.15s ease;
+}
+
+.hover-bg:hover {
+  background: var(--color-bg-hover);
 }
 
 /* ========================================

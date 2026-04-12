@@ -13,6 +13,23 @@ interface MessageBubbleProps {
   onDenyToolCall?: (callId: string) => void
 }
 
+/** Format model name: "claude-opus-4-6" → "Opus 4" */
+function formatModel(model: string): string {
+  const name = model.split('/').pop() || model
+  if (name.includes('opus')) return 'Opus 4'
+  if (name.includes('sonnet')) return 'Sonnet 4'
+  if (name.includes('haiku')) return 'Haiku 4'
+  if (name.includes('gpt-4')) return 'GPT-4o'
+  if (name.includes('gpt-3')) return 'GPT-3.5'
+  return name
+}
+
+/** Format cost: 0.0156 → "$0.02" */
+function formatCost(cost: number): string {
+  if (cost < 0.01) return `$${cost.toFixed(3)}`
+  return `$${cost.toFixed(2)}`
+}
+
 export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprove, onDenyToolCall: _onDeny }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false)
   const isUser = message.role === 'user'
@@ -29,15 +46,16 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: index * 0.05 }}
-        className="flex justify-center py-3"
+        transition={{ delay: index * 0.03 }}
+        className="flex justify-center py-4"
       >
         <span
-          className="text-[11px] px-4 py-1.5 rounded-full font-medium"
+          className="text-[11px] px-3 py-1 font-medium"
           style={{
             color: 'var(--color-text-muted)',
             background: 'var(--color-bg-tertiary)',
             border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-full)',
           }}
         >
           {message.content}
@@ -46,128 +64,118 @@ export function MessageBubble({ message, index = 0, onApproveToolCall: _onApprov
     )
   }
 
+  // ChatGPT/Claude style: no bubbles, left-aligned, avatar + content
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        delay: index * 0.04,
-        duration: 0.3,
+        delay: index * 0.03,
+        duration: 0.25,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className={`flex gap-3.5 group ${isUser ? 'flex-row-reverse' : ''}`}
-      style={{ padding: '14px 0' }}
+      className="group hover-bg"
+      style={{
+        padding: '16px 24px',
+        borderRadius: 'var(--radius-md)',
+        transition: 'background 0.15s ease',
+      }}
     >
-      {/* Avatar */}
-      <div
-        className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center mt-0.5"
-        style={{
-          background: isUser
-            ? 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))'
-            : 'linear-gradient(135deg, var(--color-accent), #818cf8)',
-          boxShadow: isUser
-            ? '0 2px 8px rgba(16, 185, 129, 0.25)'
-            : '0 2px 8px rgba(99, 102, 241, 0.25)',
-        }}
-      >
-        {isUser ? (
-          <User size={15} style={{ color: 'white' }} />
-        ) : (
-          <Bot size={15} style={{ color: 'white' }} />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className={`flex flex-col gap-3 max-w-[80%] min-w-0 ${isUser ? 'items-end' : ''}`}>
-        {/* Thinking blocks */}
-        {message.blocks
-          ?.filter((b) => b.type === 'thinking')
-          .map((block, i) => (
-            <ThinkingBlock key={i} text={'text' in block ? block.text : ''} />
-          ))}
-
-        {/* Main text bubble */}
-        {message.content && (
-          <div
-            className="relative group/bubble"
-            style={{
-              borderRadius: isUser
-                ? '20px 20px 6px 20px'
-                : '20px 20px 20px 6px',
-              padding: '14px 18px',
-              background: isUser
-                ? 'linear-gradient(135deg, #10b981, #0891b2)'
-                : 'var(--color-bg-elevated)',
-              borderLeft: isUser ? 'none' : '2px solid var(--color-accent)',
-              border: isUser ? 'none' : undefined,
-              color: isUser ? 'white' : 'var(--color-text-primary)',
-              boxShadow: isUser
-                ? '0 4px 16px rgba(16, 185, 129, 0.2)'
-                : '0 2px 8px rgba(0, 0, 0, 0.15)',
-            }}
-          >
-            {isUser ? (
-              <p className="text-[14px] leading-[1.7] whitespace-pre-wrap">{message.content}</p>
-            ) : (
-              <div className="text-[14px] leading-[1.7]">
-                <MarkdownRenderer content={message.content} />
-              </div>
-            )}
-
-            {/* Copy button */}
-            <motion.button
-              onClick={handleCopy}
-              className="absolute -top-2.5 -right-2.5 p-1.5 opacity-0 group-hover/bubble:opacity-80 cursor-pointer"
-              style={{
-                background: 'var(--color-bg-secondary)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                color: 'var(--color-text-muted)',
-                transition: 'opacity 0.15s ease',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-              }}
-            >
-              {copied ? <Check size={11} /> : <Copy size={11} />}
-            </motion.button>
-          </div>
-        )}
-
-        {/* Tool call cards */}
-        {message.blocks
-          ?.filter((b) => b.type === 'tool_call')
-          .map((block) =>
-            'id' in block ? <ToolCallCard key={block.id} block={block} /> : null
+      <div className="flex gap-4 max-w-3xl mx-auto">
+        {/* Avatar — 16px icon to match text */}
+        <div
+          className="shrink-0 w-7 h-7 flex items-center justify-center mt-0.5"
+          style={{
+            borderRadius: 'var(--radius-full)',
+            background: isUser ? 'var(--color-bg-elevated)' : 'var(--color-primary)',
+            border: isUser ? '1px solid var(--color-border)' : 'none',
+          }}
+        >
+          {isUser ? (
+            <User size={14} style={{ color: 'var(--color-text-muted)' }} />
+          ) : (
+            <Bot size={14} style={{ color: 'white' }} />
           )}
+        </div>
 
-        {/* Meta info pills */}
-        {(message.model || message.tokenUsage) && (
-          <div className="flex items-center gap-2 px-1">
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Sender label */}
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[13px] font-semibold"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              {isUser ? 'You' : 'Assistant'}
+            </span>
+            {/* Meta pills inline with sender */}
             {message.model && (
               <span
-                className="text-[10px] font-medium px-2 py-0.5 rounded-md"
+                className="text-[10px] font-medium px-1.5 py-0.5"
                 style={{
                   color: 'var(--color-text-muted)',
                   background: 'var(--color-bg-tertiary)',
                   border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 'var(--radius-full)',
                 }}
               >
-                {message.model.split('/').pop()}
+                {formatModel(message.model)}
               </span>
             )}
             {message.tokenUsage?.cost != null && (
               <span
-                className="text-[10px] font-mono px-2 py-0.5 rounded-md"
-                style={{
-                  color: 'var(--color-text-muted)',
-                  background: 'var(--color-bg-tertiary)',
-                  border: '1px solid var(--color-border-subtle)',
-                }}
+                className="text-[10px] font-mono"
+                style={{ color: 'var(--color-text-muted)' }}
               >
-                ${message.tokenUsage.cost.toFixed(4)}
+                {formatCost(message.tokenUsage.cost)}
               </span>
             )}
+
+            {/* Copy button — appears on hover */}
+            <motion.button
+              onClick={handleCopy}
+              className="ml-auto p-1 opacity-0 group-hover:opacity-60 cursor-pointer"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-text-muted)',
+                transition: 'opacity 0.15s ease',
+              }}
+              whileHover={{ opacity: 1 }}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </motion.button>
           </div>
-        )}
+
+          {/* Thinking blocks */}
+          {message.blocks
+            ?.filter((b) => b.type === 'thinking')
+            .map((block, i) => (
+              <ThinkingBlock key={i} text={'text' in block ? block.text : ''} />
+            ))}
+
+          {/* Main text — no bubble, just text */}
+          {message.content && (
+            <div
+              className="text-[14px] leading-[1.7]"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              {isUser ? (
+                <p className="whitespace-pre-wrap">{message.content}</p>
+              ) : (
+                <MarkdownRenderer content={message.content} />
+              )}
+            </div>
+          )}
+
+          {/* Tool call cards */}
+          {message.blocks
+            ?.filter((b) => b.type === 'tool_call')
+            .map((block) =>
+              'id' in block ? <ToolCallCard key={block.id} block={block} /> : null
+            )}
+        </div>
       </div>
     </motion.div>
   )

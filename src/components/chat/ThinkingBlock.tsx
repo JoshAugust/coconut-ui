@@ -8,30 +8,25 @@ interface ThinkingBlockProps {
 
 export function ThinkingBlock({ text }: ThinkingBlockProps) {
   const [expanded, setExpanded] = useState(false)
-  const preview = text.slice(0, 100) + (text.length > 100 ? '…' : '')
+  const preview = text.slice(0, 120) + (text.length > 120 ? '…' : '')
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="relative overflow-hidden cursor-pointer w-full"
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="overflow-hidden cursor-pointer w-full hover-lift"
       style={{
         background: 'var(--color-bg-elevated)',
-        border: '1px solid rgba(139, 92, 246, 0.2)',
+        border: '1px solid var(--color-border)',
         borderLeft: '3px solid rgba(139, 92, 246, 0.5)',
-        borderRadius: '14px',
+        borderRadius: 'var(--radius-lg)',
       }}
       onClick={() => setExpanded(!expanded)}
     >
-      <div className="px-4 py-3.5">
+      <div className="px-3.5 py-3">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-2">
-          <div
-            className="w-5 h-5 rounded-md flex items-center justify-center"
-            style={{ background: 'rgba(139, 92, 246, 0.15)' }}
-          >
-            <Brain size={11} style={{ color: '#a78bfa' }} />
-          </div>
+        <div className="flex items-center gap-2">
+          <Brain size={14} style={{ color: '#a78bfa' }} />
           <span
             className="text-[11px] font-semibold tracking-wide uppercase"
             style={{ color: '#a78bfa' }}
@@ -40,10 +35,10 @@ export function ThinkingBlock({ text }: ThinkingBlockProps) {
           </span>
           <motion.div
             animate={{ rotate: expanded ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="ml-auto"
           >
-            <ChevronDown size={13} style={{ color: 'rgba(139, 92, 246, 0.5)' }} />
+            <ChevronDown size={14} style={{ color: 'var(--color-text-muted)' }} />
           </motion.div>
         </div>
 
@@ -55,7 +50,8 @@ export function ThinkingBlock({ text }: ThinkingBlockProps) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
+              className="mt-2.5"
             >
               <p
                 className="text-[12px] leading-[1.7] whitespace-pre-wrap"
@@ -69,7 +65,7 @@ export function ThinkingBlock({ text }: ThinkingBlockProps) {
               key="collapsed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[12px] leading-[1.5]"
+              className="text-[12px] leading-[1.5] mt-2"
               style={{ color: 'var(--color-text-muted)' }}
             >
               {preview}

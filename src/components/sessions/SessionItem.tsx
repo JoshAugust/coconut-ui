@@ -35,24 +35,23 @@ export function SessionItem({ session }: SessionItemProps) {
   const { activeSessionId, setActiveSession } = useSessionsStore()
   const isActive = activeSessionId === session.id
   const ChannelIcon = channelIcons[session.channel || 'default'] || channelIcons.default
-  const isActiveDot = session.status === 'active'
+  const isLive = session.status === 'active'
 
   return (
     <motion.div
       layout
       onClick={() => setActiveSession(session.id)}
-      className="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all"
+      className="flex items-start gap-3 cursor-pointer"
       style={{
+        padding: '10px 12px',
         background: isActive ? 'var(--color-bg-elevated)' : 'transparent',
-        borderLeft: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
-        borderRadius: '12px',
-        paddingLeft: isActive ? '13px' : '12px',
+        borderRadius: 'var(--radius-lg)',
+        borderLeft: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
+        transition: 'background 0.15s ease, border-color 0.15s ease',
+        marginBottom: '2px',
       }}
       onMouseEnter={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.background =
-            'linear-gradient(to right, rgba(16, 185, 129, 0.04), transparent)'
-        }
+        if (!isActive) e.currentTarget.style.background = 'var(--color-bg-hover)'
       }}
       onMouseLeave={(e) => {
         if (!isActive) e.currentTarget.style.background = 'transparent'
@@ -60,32 +59,28 @@ export function SessionItem({ session }: SessionItemProps) {
       whileTap={{ scale: 0.98 }}
     >
       {/* Channel icon */}
-      <ChannelIcon size={14} style={{ color: 'var(--color-text-muted)', flexShrink: 0 }} />
+      <ChannelIcon size={16} style={{ color: 'var(--color-text-muted)', flexShrink: 0, marginTop: '2px' }} />
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-1">
+        <div className="flex items-center justify-between gap-2">
           <span
-            className="truncate"
-            style={{
-              fontSize: '13px',
-              fontWeight: 500,
-              color: 'var(--color-text-primary)',
-            }}
+            className="truncate text-[13px] font-medium"
+            style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
           >
             {session.label || `Session ${session.id.slice(0, 8)}`}
           </span>
           <span
-            className="flex-shrink-0 tabular-nums"
-            style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}
+            className="flex-shrink-0 tabular-nums text-[11px]"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             {timeAgo(session.lastMessageAt)}
           </span>
         </div>
         {session.lastMessagePreview && (
           <p
-            className="truncate mt-0.5"
-            style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}
+            className="truncate mt-1 text-[12px] leading-[1.4]"
+            style={{ color: 'var(--color-text-muted)' }}
           >
             {session.lastMessagePreview}
           </p>
@@ -94,13 +89,14 @@ export function SessionItem({ session }: SessionItemProps) {
 
       {/* Status dot */}
       <span
-        className={isActiveDot ? 'session-dot-pulse' : ''}
+        className={isLive ? 'session-dot-pulse' : ''}
         style={{
           display: 'inline-block',
           width: '6px',
           height: '6px',
-          borderRadius: '9999px',
+          borderRadius: 'var(--radius-full)',
           flexShrink: 0,
+          marginTop: '6px',
           background: statusColors[session.status] || 'var(--color-text-muted)',
         }}
       />

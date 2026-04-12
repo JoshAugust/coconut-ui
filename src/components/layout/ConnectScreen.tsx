@@ -58,9 +58,9 @@ export function ConnectScreen() {
         style={{
           borderRadius: '24px',
           padding: '44px',
-          background: 'var(--color-bg-secondary)',
+          background: 'var(--color-bg-tertiary)',
           border: '1px solid var(--color-border)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.35), 0 0 80px rgba(16, 185, 129, 0.04)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(16, 185, 129, 0.03)',
         }}
       >
         {/* Logo */}
