@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, MessageSquare } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useSessionsStore } from '../../stores/sessions'
 import { useConnectionStore } from '../../stores/connection'
 import { SessionItem } from './SessionItem'
 import { SessionSearch } from './SessionSearch'
+import { EmptyState } from '../common/EmptyState'
 
 export function SessionList() {
   const { sessions, setSessions, loading, setLoading, addSession, setActiveSession } = useSessionsStore()
@@ -83,18 +84,22 @@ export function SessionList() {
       {/* Session list */}
       {loading && sessions.length === 0 ? (
         <div className="space-y-2 px-1">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-10 rounded-lg animate-pulse"
-              style={{ background: 'var(--color-bg-tertiary)' }}
-            />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-start gap-3 px-3 py-2.5">
+              <div className="skeleton skeleton-circle" style={{ width: 16, height: 16, marginTop: 2 }} />
+              <div className="flex-1 space-y-2">
+                <div className="skeleton skeleton-text" />
+                <div className="skeleton skeleton-text-sm" />
+              </div>
+            </div>
           ))}
         </div>
       ) : grouped.length === 0 ? (
-        <p className="text-xs text-center py-4" style={{ color: 'var(--color-text-muted)' }}>
-          {searchQuery ? 'No matching sessions' : 'No sessions yet'}
-        </p>
+        <EmptyState
+          icon={MessageSquare}
+          title={searchQuery ? 'No matching sessions' : 'No conversations yet'}
+          description={searchQuery ? undefined : 'Connect to your gateway to start chatting'}
+        />
       ) : (
         <AnimatePresence>
           {grouped.map((session) => (
