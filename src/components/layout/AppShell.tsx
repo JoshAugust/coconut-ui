@@ -169,9 +169,9 @@ export function AppShell() {
           animate={{ opacity: 1 }}
           className="absolute top-4 left-4 p-2 z-10 cursor-pointer"
           style={{
-            background: 'var(--color-glass)',
+            background: 'var(--color-bg-secondary)',
             backdropFilter: 'blur(12px)',
-            border: '1px solid var(--color-glass-border)',
+            border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-md)',
             color: 'var(--color-text-secondary)',
           }}
@@ -407,7 +407,7 @@ function MobileHeader({
       style={{
         height: '52px',
         borderBottom: '1px solid var(--color-border-subtle)',
-        background: 'var(--color-glass)',
+        background: 'var(--color-bg-secondary)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
@@ -461,7 +461,7 @@ function MobileBottomTabs({
       style={{
         height: '56px',
         borderTop: '1px solid var(--color-border)',
-        background: 'var(--color-glass)',
+        background: 'var(--color-bg-secondary)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',

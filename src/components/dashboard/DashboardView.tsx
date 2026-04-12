@@ -114,10 +114,10 @@ export function DashboardView() {
                 animate={{ opacity: 1 }}
                 className="h-28 rounded-xl"
                 style={{
-                  background: 'var(--color-glass)',
-                  border: '1px solid var(--color-glass-border)',
-                  backdropFilter: 'blur(var(--glass-blur))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
+                  background: 'var(--color-bg-elevated)',
+                  border: '1px solid var(--color-border)',
+                  // glass removed,
+                  // glass removed,
                 }}
               >
                 <div className="p-4 space-y-2 animate-pulse">
@@ -195,10 +195,10 @@ export function DashboardView() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="relative rounded-xl p-5"
                 style={{
-                  background: 'var(--color-glass)',
-                  backdropFilter: 'blur(var(--glass-blur))',
-                  WebkitBackdropFilter: 'blur(var(--glass-blur))',
-                  border: '1px solid var(--color-glass-border)',
+                  background: 'var(--color-bg-elevated)',
+                  // glass removed,
+                  // glass removed,
+                  border: '1px solid var(--color-border)',
                   boxShadow: 'var(--shadow-md)',
                 }}
               >
@@ -258,7 +258,7 @@ export function DashboardView() {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="relative rounded-xl overflow-hidden"
               style={{
-                border: '1px solid var(--color-glass-border)',
+                border: '1px solid var(--color-border)',
                 height: '400px',
               }}
             >

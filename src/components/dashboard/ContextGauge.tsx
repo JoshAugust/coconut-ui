@@ -69,10 +69,10 @@ export function ContextGauge({ pressure }: ContextGaugeProps) {
       transition={{ duration: 0.5, delay: 0.3 }}
       className="relative rounded-xl p-5 flex flex-col"
       style={{
-        background: 'var(--color-glass)',
-        backdropFilter: 'blur(var(--glass-blur))',
-        WebkitBackdropFilter: 'blur(var(--glass-blur))',
-        border: '1px solid var(--color-glass-border)',
+        background: 'var(--color-bg-elevated)',
+        // glass removed,
+        // glass removed,
+        border: '1px solid var(--color-border)',
         boxShadow: 'var(--shadow-md)',
       }}
     >
