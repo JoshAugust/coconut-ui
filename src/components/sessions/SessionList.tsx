@@ -102,8 +102,8 @@ export function SessionList() {
         />
       ) : (
         <AnimatePresence>
-          {grouped.map((session) => (
-            <SessionItem key={session.id} session={session} />
+          {grouped.map((session, i) => (
+            <SessionItem key={session.id} session={session} index={i} />
           ))}
         </AnimatePresence>
       )}

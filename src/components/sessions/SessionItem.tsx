@@ -5,6 +5,7 @@ import { useSessionsStore } from '../../stores/sessions'
 
 interface SessionItemProps {
   session: NormalizedSession
+  index?: number
 }
 
 const statusColors: Record<string, string> = {
@@ -31,7 +32,7 @@ function timeAgo(dateStr?: string): string {
   return `${Math.floor(hours / 24)}d`
 }
 
-export function SessionItem({ session }: SessionItemProps) {
+export function SessionItem({ session, index = 0 }: SessionItemProps) {
   const { activeSessionId, setActiveSession } = useSessionsStore()
   const isActive = activeSessionId === session.id
   const ChannelIcon = channelIcons[session.channel || 'default'] || channelIcons.default
@@ -40,6 +41,9 @@ export function SessionItem({ session }: SessionItemProps) {
   return (
     <motion.div
       layout
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.2 }}
       onClick={() => setActiveSession(session.id)}
       className="flex items-start gap-3 cursor-pointer"
       style={{
